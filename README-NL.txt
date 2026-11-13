@@ -328,16 +328,28 @@ Sound en show lopen gelijk: de app rekent vanaf het moment van de tip (DonateWav
 Versie 3.18: de overlay laat een tip iets later zien dan het moment van de tip (ontvangen + animatie en
 geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later laten beginnen dan de tip" op de
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
+BINNENKOMST-SHOWS (versie 3.30) – Regels › "♪ Binnenkomst Thomas" en "♪ Binnenkomst Diego".
+Komt Thomas of Diego de LIVE binnen (BetterTok: join/member), dan speelt zijn eigen ♪-show op zijn binnenkomst-sound
+(Thomas 135 BPM, 28,4 s; Diego "Black Water" 160 BPM, 32,0 s). De volgende show wacht tot de sound klaar is.
+Andere kijkers krijgen deze show niet. Klopt de naam niet precies? Pas bij de regel "Alleen voor deze kijker(s)"
+de TikTok-naam (zonder @) of weergavenaam aan; meerdere namen met een komma. Testen: Regels › "Thomas komt binnen".
+
 KERST-OVERLAYS (versie 3.27) – BetterTok › kaart "Kerst-overlays".
 De app biedt op deze pc eigen kerstversies van de DonateWave-onderdelen aan, live bijgewerkt met elke tip
 die via je DonateWave-sleutel binnenkomt:
-  http://localhost:7531/kerst/alert       Tipalert (600 × 420) – verschijnt tegelijk met die van DonateWave
-  http://localhost:7531/kerst/doel        Tipdoel als zuurstok (520 × 200)
-  http://localhost:7531/kerst/ranking     Lijst van de Kerstman, top 5 van de maand (420 × 480)
-  http://localhost:7531/kerst/recent      Onder de boom, laatste 5 tips (420 × 420)
-  http://localhost:7531/kerst/supporters  Laatste supporter, kerstkampioen van de week, vandaag (420 × 420)
-  http://localhost:7531/kerst/alles       Alles onder elkaar, past zich aan 432 × 768 aan
+  http://127.0.0.1:7531/kerst/alert.html       Tipalert (600 × 420) – verschijnt tegelijk met die van DonateWave
+  http://127.0.0.1:7531/kerst/doel.html        Tipdoel als zuurstok (520 × 200)
+  http://127.0.0.1:7531/kerst/ranking.html     Lijst van de Kerstman, top 5 van de maand (420 × 480)
+  http://127.0.0.1:7531/kerst/recent.html      Onder de boom, laatste 5 tips (420 × 420)
+  http://127.0.0.1:7531/kerst/supporters.html  Laatste supporter, kerstkampioen van de week, vandaag (420 × 420)
+  http://127.0.0.1:7531/kerst/alles.html       Alles onder elkaar, past zich aan 432 × 768 aan
 Zet het adres als browserbron in OBS of als linkbron in TikTok LIVE Studio (op dezelfde pc).
+TikTok LIVE Studio accepteert alleen een echt webadres (https + .nl). Klik daarvoor één keer op
+"Instellen voor TikTok LIVE Studio" (versie 3.29): de app maakt een eigen certificaat en zet in het hosts-bestand
+"127.0.0.1 kerst.slc-overlay.nl", zodat dit adres alleen op deze pc naar de app wijst. Windows vraagt twee keer
+om toestemming. Daarna gebruik je "Kopieer voor TikTok", bijv. https://kerst.slc-overlay.nl:7532/kerst/alles.html.
+Voor OBS werkt ook het gewone adres (Kopieer voor OBS).
+Testtips staan altijd in "Onder de boom" en bij "Laatste supporter"; voor doel, ranking en vandaag zet je "Testtips meetellen" aan.
 Extra's achter het adres: ?scale=1.3 (groter/kleiner), ?still=1 (zonder beweging), ?bg=1 (donkere achtergrond, voorbeeld).
 Zet hetzelfde onderdeel in DonateWave › Overlaybouwer uit, anders staat het er dubbel.
 Doel, testtips meetellen, alert-duur en poort stel je in op de kaart. Tips worden bewaard in donations.json.

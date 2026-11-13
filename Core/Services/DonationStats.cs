@@ -103,7 +103,10 @@ public sealed class DonationStats
         List<TipRecord> all;
         int version;
         lock (_gate) { all = _tips.ToList(); version = _version; }
+        // Bedragen (doel, ranking, vandaag, weekkampioen) zonder testtips, tenzij "Testtips meetellen" aan staat.
+        // Recente tips en laatste supporter tonen testtips altijd: zo zie je bij het testen meteen dat het werkt.
         var counted = all.Where(t => o.CountTests || !t.Test).OrderBy(t => t.AtUtc).ToList();
+        var shown = all.OrderBy(t => t.AtUtc).ToList();
         var nowLocal = nowUtc.ToLocalTime();
         var todayStart = nowLocal.Date.ToUniversalTime();
         var monday = nowLocal.Date.AddDays(-(((int)nowLocal.DayOfWeek + 6) % 7)).ToUniversalTime();
@@ -124,7 +127,7 @@ public sealed class DonationStats
         var goalCents = counted.Where(t => t.AtUtc >= o.GoalStartUtc).Sum(t => t.Cents);
         var today = counted.Where(t => t.AtUtc >= todayStart).ToList();
         var week = Top(monday, 1);
-        var last = counted.LastOrDefault();
+        var last = shown.LastOrDefault();
 
         // Alerts: op het moment dat DonateWave de tip laat zien, nooit over elkaar heen
         var alerts = new List<object>();
@@ -155,7 +158,7 @@ public sealed class DonationStats
                 reached = goalCents >= o.GoalCents
             },
             last = last == null ? null : Tip(last),
-            recent = counted.AsEnumerable().Reverse().Take(5).Select(Tip).ToArray(),
+            recent = shown.AsEnumerable().Reverse().Take(5).Select(Tip).ToArray(),
             today = new { amount = Euro(today.Sum(t => t.Cents)), cents = today.Sum(t => t.Cents), count = today.Count },
             weekChampion = week.FirstOrDefault(),
             ranking = Top(monthStart, 5),

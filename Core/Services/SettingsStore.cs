@@ -363,7 +363,15 @@ public sealed class SettingsStore : IDisposable
             s.Version = 26;
             changed = true;
         }
-        if (changed && s.Version < 26) s.Version = 26;
+        if (startVersion < 27)
+        {
+            // Versie 27: binnenkomst-shows voor Thomas en Diego (BetterTok join + eigen sound)
+            foreach (var t in Presets.EntranceRules())
+                if (s.Triggers.All(x => x.Id != t.Id)) s.Triggers.Add(t);
+            s.Version = 27;
+            changed = true;
+        }
+        if (changed && s.Version < 27) s.Version = 27;
         return changed;
     }
 

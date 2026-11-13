@@ -151,6 +151,26 @@ public static class Presets
         yield return new EventTrigger { Name = "Share", EventType = EventTypes.Share, ShowId = "preset-" + Share, Priority = Priorities.Normal, MaxInQueue = 2 };
         foreach (var t in GiftRules()) yield return t;
         foreach (var t in DonateWaveRules()) yield return t;
+        foreach (var t in EntranceRules()) yield return t;
+    }
+
+    /// <summary>Binnenkomst-sounds in BetterTok: (sleutel, TikTok-naam, weergavenaam, duur van de sound in ms).</summary>
+    public static readonly (string Id, string User, string Name, int SoundMs)[] Entrances =
+    {
+        ("thomas", "thomas", "Thomas", 28440),
+        ("diego", "diego", "Diego", 31974),
+    };
+
+    /// <summary>Als deze kijker de LIVE binnenkomt speelt zijn eigen ♪-show (op zijn binnenkomst-sound in BetterTok).</summary>
+    public static IEnumerable<EventTrigger> EntranceRules()
+    {
+        foreach (var (id, user, name, soundMs) in Entrances)
+            yield return new EventTrigger
+            {
+                Id = "te-" + id, Name = $"♪ Binnenkomst {name}", EventType = EventTypes.Member, MatchText = user,
+                ShowId = "preset-song-" + id, Priority = Priorities.VeryHigh, InterruptCurrent = false,
+                CooldownSeconds = 60, MaxInQueue = 1, SoundDurationMs = soundMs
+            };
     }
 
     /// <summary>

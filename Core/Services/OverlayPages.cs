@@ -8,7 +8,7 @@ public static class OverlayPages
     public static string Index(IEnumerable<(string Path, string Name, string Size)> views)
     {
         var rows = string.Join("", views.Select(v =>
-            $"<li><a href=\"/kerst/{v.Path}?bg=1\">{WebUtility.HtmlEncode(v.Name)}</a> <code>/kerst/{v.Path}</code> <span>{v.Size}</span></li>"));
+            $"<li><a href=\"/kerst/{v.Path}.html?bg=1\">{WebUtility.HtmlEncode(v.Name)}</a> <code>/kerst/{v.Path}.html</code> <span>{v.Size}</span></li>"));
         return $$"""
 <!doctype html><html lang="nl"><head><meta charset="utf-8"><title>Kerst-overlays</title>
 <style>body{margin:0;background:#0A0F24;color:#F4F7FF;font:16px/1.5 Inter,Segoe UI,Arial,sans-serif;padding:32px}
@@ -204,7 +204,9 @@ __SNOW__
       tag.style.setProperty('--c', cl[0]); tag.style.setProperty('--ic', cl[1]);
       var ic = el('div','ic'); ic.innerHTML = GIFT;   // vaste eigen SVG, geen kijkersdata
       var tx = el('div','tx'); var t1 = el('div','t1'); t1.appendChild(el('span','n',x.name)); t1.appendChild(el('span','v',x.amount));
-      tx.appendChild(t1); var k = kind(x); if (k) tx.appendChild(el('span','t2', x.special || x.wheel ? k : '“' + k + '”'));
+      tx.appendChild(t1); var k = kind(x); var sub = x.special || x.wheel ? k : (k ? '“' + k + '”' : '');
+      if (x.test) sub = sub ? sub + ' · test' : 'Testtip';
+      if (sub) tx.appendChild(el('span','t2', sub));
       tag.appendChild(ic); tag.appendChild(tx); rc.appendChild(tag);
     });
     s.recent.forEach(function(x){ seen[x.id] = 1; });

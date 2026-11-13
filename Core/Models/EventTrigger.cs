@@ -144,6 +144,7 @@ public sealed class EventTrigger : ObservableObject
         EventTypes.Tip when TipKind == TipKinds.Wheel => "Lucky Wheel" + (MinCoins != null || MaxCoins != null ? " · " + EuroRangeLabel : ""),
         EventTypes.Tip => EuroRangeLabel,
         EventTypes.Comment when MatchText.Length > 0 => $"Bevat \"{MatchText}\"",
+        EventTypes.Member when MatchText.Length > 0 => $"Alleen {MatchText}",
         EventTypes.Like when LikeThreshold > 0 => $"Per {LikeThreshold} likes",
         _ => "Altijd"
     };

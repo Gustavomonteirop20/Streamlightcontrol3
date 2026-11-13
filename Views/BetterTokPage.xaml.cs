@@ -31,7 +31,9 @@ public partial class BetterTokPage : UserControl, IPageActivated
 
     // ------------------------------------------------------------------ Kerst-overlays
 
-    private sealed record OverlayLink(string Name, string Url, string Size, string Preview);
+    private sealed record OverlayLink(string Name, string Size, string ObsUrl, string TikTokUrl);
+
+    private bool _tiktokReady;
 
     private void UpdateOverlays()
     {
@@ -39,19 +41,111 @@ public partial class BetterTokPage : UserControl, IPageActivated
         OvDot.Fill = Ui.Res(!S.Settings.Overlays.Enabled ? "Text3Brush" : ov.IsRunning ? "SuccessBrush" : "DangerBrush");
         OvStatus.Text = !S.Settings.Overlays.Enabled ? "Uit" : ov.IsRunning ? $"Aan · {C.Donations.Count} tips bijgehouden" : ov.Status;
         var port = S.Settings.Overlays.Port;
-        OvLinks.ItemsSource = OverlayServer.Views.Select(v => new OverlayLink(v.Name, $"http://localhost:{port}/kerst/{v.Path}", v.Size,
-            $"http://localhost:{port}/kerst/{v.Path}?bg=1")).ToList();
+        OvLinks.ItemsSource = OverlayServer.Views.Select(v => new OverlayLink(v.Name, "Formaat bron: " + v.Size + " px",
+            OverlayServer.ViewUrl(port, v.Path), OverlayServer.TikTokUrl(port, v.Path))).ToList();
+        _ = CheckTikTokAsync();
+    }
+
+    /// <summary>Is het https-adres klaar? (certificaat vertrouwd, domeinnaam wijst naar deze pc, https draait)</summary>
+    private async Task CheckTikTokAsync()
+    {
+        var cert = C.OverlayCertificate;
+        var trusted = cert?.IsTrusted() == true;
+        var host = await Task.Run(OverlayCert.HostPointsHere);
+        _tiktokReady = trusted && host && C.Overlays.TlsRunning;
+        OvSetupButton.Content = _tiktokReady ? "Opnieuw instellen" : "Instellen voor TikTok LIVE Studio";
+        OvTikTokStatus.Text = _tiktokReady
+            ? "Klaar. Gebruik ‘Kopieer voor TikTok’ en plak het adres als Link in TikTok LIVE Studio. Zet daar de breedte en hoogte op het formaat dat erbij staat. Werkt een bron niet meteen: herstart TikTok LIVE Studio één keer."
+            : "TikTok accepteert alleen een echt webadres (met .nl/.com en https). Klik één keer op de knop: de app maakt dan het adres https://kerst.slc-overlay.nl dat alleen op deze pc naar de app wijst. Windows vraagt twee keer om toestemming (certificaat vertrouwen en het hosts-bestand aanpassen)."
+              + (cert == null ? " Let op: het certificaat kon niet worden gemaakt (zie Error Center)." : "")
+              + (!S.Settings.Overlays.Enabled ? " Zet eerst de overlays aan." : "");
+    }
+
+    private async void OvSetup_Click(object sender, RoutedEventArgs e)
+    {
+        var cert = C.OverlayCertificate;
+        if (cert == null) { Ui.Toast("Het certificaat kon niet worden gemaakt. Kijk in Error Center › app.log.", ToastKind.Error); return; }
+        OvSetupButton.IsEnabled = false;
+        try
+        {
+            // 1. Certificaat vertrouwen (Windows vraagt: "Wilt u dit certificaat installeren?" → Ja)
+            if (!cert.IsTrusted())
+            {
+                try { cert.Trust(); }
+                catch (Exception ex) { Ui.Toast("Certificaat niet vertrouwd: " + ex.Message, ToastKind.Error); return; }
+                if (!cert.IsTrusted()) { Ui.Toast("Je koos ‘Nee’ bij het certificaat. Klik opnieuw en kies ‘Ja’.", ToastKind.Error); return; }
+            }
+            // 2. Domeinnaam naar deze pc laten wijzen (hosts-bestand, Windows vraagt om beheerdersrechten)
+            if (!await Task.Run(OverlayCert.HostPointsHere))
+            {
+                var ok = await Task.Run(AddHostsEntry);
+                if (!ok) { Ui.Toast("Het hosts-bestand is niet aangepast (toestemming geweigerd?). Klik opnieuw en kies ‘Ja’.", ToastKind.Error); return; }
+                if (!await Task.Run(OverlayCert.HostPointsHere))
+                {
+                    Ui.Toast("De domeinnaam wijst nog niet naar deze pc. Herstart de pc één keer en kijk opnieuw.", ToastKind.Error);
+                    return;
+                }
+            }
+            // 3. https (opnieuw) starten
+            C.Overlays.Stop();
+            C.Overlays.Apply();
+            Ui.Toast(C.Overlays.TlsRunning ? "Klaar voor TikTok LIVE Studio" : "https kon niet starten: poort " + C.Overlays.TlsPort + " is bezet. Kies een andere poort.",
+                C.Overlays.TlsRunning ? ToastKind.Success : ToastKind.Error);
+        }
+        finally
+        {
+            OvSetupButton.IsEnabled = true;
+            UpdateOverlays();
+        }
+    }
+
+    /// <summary>Zet "127.0.0.1 kerst.slc-overlay.nl" in het hosts-bestand (met toestemming van de gebruiker, UAC).</summary>
+    private static bool AddHostsEntry()
+    {
+        const string script = """
+$h = Join-Path $env:SystemRoot 'System32\drivers\etc\hosts'
+$name = 'kerst.slc-overlay.nl'
+$lines = @(Get-Content -LiteralPath $h -ErrorAction SilentlyContinue)
+if (-not ($lines | Where-Object { $_ -match '^\s*127\.0\.0\.1\s+kerst\.slc-overlay\.nl(\s|$)' })) {
+  $text = [IO.File]::ReadAllText($h)
+  $prefix = if ($text.Length -gt 0 -and -not $text.EndsWith("`n")) { "`r`n" } else { "" }
+  [IO.File]::AppendAllText($h, $prefix + "127.0.0.1 $name # Stream Light Control (kerst-overlays)`r`n", [Text.Encoding]::ASCII)
+}
+ipconfig /flushdns | Out-Null
+""";
+        try
+        {
+            var encoded = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(script));
+            using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("powershell.exe",
+                "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -EncodedCommand " + encoded)
+            { UseShellExecute = true, Verb = "runas", WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden });
+            if (p == null) return false;
+            p.WaitForExit(30000);
+            return p.HasExited && p.ExitCode == 0;
+        }
+        catch { return false; }   // UAC geweigerd (1223) of PowerShell niet gevonden
     }
 
     private void OvSwitch_Click(object sender, RoutedEventArgs e) { C.Overlays.Apply(); UpdateOverlays(); }
 
-    private void OvPort_LostFocus(object sender, RoutedEventArgs e) => Dispatcher.BeginInvoke(() => { C.Overlays.Apply(); UpdateOverlays(); });
+    private void OvPort_LostFocus(object sender, RoutedEventArgs e) => Dispatcher.BeginInvoke(() => { C.Overlays.Stop(); C.Overlays.Apply(); UpdateOverlays(); });
 
-    private void OvCopy_Click(object sender, RoutedEventArgs e)
+    private static void CopyText(string text, string what)
     {
-        if ((sender as FrameworkElement)?.Tag is not string url) return;
-        try { Clipboard.SetText(url); Ui.Toast("Adres gekopieerd"); }
+        try { Clipboard.SetText(text); Ui.Toast(what + " gekopieerd"); }
         catch (Exception ex) { Ui.Toast("Kopiëren mislukt: " + ex.Message, ToastKind.Error); }
+    }
+
+    private void OvCopyTikTok_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not OverlayLink l) return;
+        CopyText(l.TikTokUrl, "Adres voor TikTok");
+        if (!_tiktokReady) Ui.Toast("Klik eerst op ‘Instellen voor TikTok LIVE Studio’, anders werkt dit adres nog niet.", ToastKind.Error);
+    }
+
+    private void OvCopyObs_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is OverlayLink l) CopyText(l.ObsUrl, "Adres voor OBS");
     }
 
     private static void Open(string url)
@@ -62,10 +156,10 @@ public partial class BetterTokPage : UserControl, IPageActivated
 
     private void OvOpen_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as FrameworkElement)?.Tag is string url) Open(url);
+        if ((sender as FrameworkElement)?.DataContext is OverlayLink l) Open((_tiktokReady ? l.TikTokUrl : l.ObsUrl) + "?bg=1");
     }
 
-    private void OvIndex_Click(object sender, RoutedEventArgs e) => Open($"http://localhost:{S.Settings.Overlays.Port}/");
+    private void OvIndex_Click(object sender, RoutedEventArgs e) => Open($"http://127.0.0.1:{S.Settings.Overlays.Port}/");
 
     private void OvResetGoal_Click(object sender, RoutedEventArgs e)
     {
@@ -88,7 +182,7 @@ public partial class BetterTokPage : UserControl, IPageActivated
 
     private static void Nudge(object sender, int ms)
     {
-        if ((sender as FrameworkElement)?.Tag is StreamLightControl2.Core.Models.EventTrigger t) t.StartDelayMs += ms;
+        if ((sender as FrameworkElement)?.DataContext is StreamLightControl2.Core.Models.EventTrigger t) t.StartDelayMs += ms;
     }
     private void DelayMinus_Click(object sender, RoutedEventArgs e) => Nudge(sender, -100);
     private void DelayPlus_Click(object sender, RoutedEventArgs e) => Nudge(sender, +100);

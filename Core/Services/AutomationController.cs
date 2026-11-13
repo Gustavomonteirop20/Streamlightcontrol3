@@ -51,7 +51,12 @@ public sealed class AutomationController : IDisposable
         BetterTok = new BetterTokClient(Errors);
         DonateWave = new DonateWaveClient(Errors, donateWaveHttp);
         Donations = new DonationStats(Store.DataDirectory);
-        Overlays = new OverlayServer(Donations, () => Settings.Overlays, Errors.WriteLog);
+        _overlayCert = new Lazy<OverlayCert?>(() =>
+        {
+            try { return OverlayCert.LoadOrCreate(Store.DataDirectory); }
+            catch (Exception ex) { Errors.WriteLog($"[Overlays] certificaat: {ex.Message}"); return null; }
+        });
+        Overlays = new OverlayServer(Donations, () => Settings.Overlays, Errors.WriteLog, () => _overlayCert.Value?.Leaf);
         Spotify = new SpotifyLightController(Engine, () => _targets, () => Settings, () => Queue.Current != null || Calibrating, Errors, nowPlaying, audio);
     }
 
@@ -61,6 +66,10 @@ public sealed class AutomationController : IDisposable
     public DonationStats Donations { get; }
     /// <summary>Lokale bron (127.0.0.1) voor de kerst-overlays in OBS / TikTok LIVE Studio.</summary>
     public OverlayServer Overlays { get; }
+
+    private readonly Lazy<OverlayCert?> _overlayCert;
+    /// <summary>Eigen certificaat voor https://kerst.slc-overlay.nl (TikTok LIVE Studio).</summary>
+    public OverlayCert? OverlayCertificate => _overlayCert.Value;
 
     /// <summary>Tipdoel opnieuw vanaf € 0 laten tellen.</summary>
     public void ResetTipGoal()

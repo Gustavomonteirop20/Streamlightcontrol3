@@ -140,7 +140,7 @@ TestSync("Opslag: versie 4 → 5 vervangt oude coin-bereiken door de BetterTok-r
     s.Triggers.Add(new EventTrigger { Name = "Mijn Rose", EventType = EventTypes.Gift, GiftNames = "Rose", ShowId = "preset-police" });
     SettingsStore.Migrate(s);
     SettingsStore.EnsureDefaults(s, false);
-    Eq(26, s.Version);
+    Eq(27, s.Version);
     True(s.Triggers.All(t => t.Name != "Gift 100–499 coins"), "oude standaard weg");
     Eq(14999, s.Triggers.Single(t => t.Id == "tf-10000").MaxCoins, "bestaande regel bijgewerkt");
     True(s.Triggers.Any(t => t.Name == "Mijn Rose"), "eigen regel blijft");
@@ -439,7 +439,7 @@ TestSync("Presets: geen flitsfase sneller dan de standaard snelheidslimiet", () 
         }
 });
 
-TestSync("Song-shows: alle 47 aanwezig, lengte gelijk aan de sound, uitvoerbaar", () =>
+TestSync("Song-shows: alle 49 aanwezig (47 dono + 2 binnenkomst), lengte gelijk aan de sound, uitvoerbaar", () =>
 {
     var expected = new Dictionary<string, double>
     {
@@ -448,9 +448,10 @@ TestSync("Song-shows: alle 47 aanwezig, lengte gelijk aan de sound, uitvoerbaar"
         ["song-numbepic"] = 47.54, ["song-nevercomingdown"] = 43.81, ["song-surgingsparks"] = 24.06, ["song-moveit"] = 18.96,
         ["song-somebody"] = 86.83, ["song-sweetzaagoline"] = 19.44, ["song-kickpong"] = 34.77,
         ["song-c4"] = 42.79, ["song-cancan"] = 29.23, ["song-dualdamage"] = 35.57, ["song-elsonidito"] = 24.58, ["song-f1hardstyle"] = 25.78, ["song-feelinhigh"] = 34.51, ["song-fireflies"] = 65.72, ["song-fuckthehaters"] = 29.6, ["song-hitthegas"] = 33.67, ["song-incomingadjuzt"] = 35.66, ["song-onekiss"] = 29.91, ["song-outsiders"] = 28.86, ["song-partyrock"] = 22.31, ["song-pyrotechnik"] = 26.67, ["song-sogoodtobebad"] = 67.0, ["song-soincredible"] = 26.02, ["song-titanium"] = 51.38,
-        ["song-banger"] = 28.5, ["song-boa"] = 19.7, ["song-burningskies"] = 27.64, ["song-christmaslunos"] = 40.75, ["song-citylights"] = 34.13, ["song-deadlyguns"] = 13.54, ["song-helpless"] = 29.71, ["song-imaginary"] = 31.97, ["song-moveitfull"] = 21.8, ["song-oceans"] = 27.08, ["song-paradise"] = 22.65, ["song-pumpit"] = 35.7, ["song-savetik"] = 27.11, ["song-sound2708"] = 24.83, ["song-twilightzone"] = 46.21
+        ["song-banger"] = 28.5, ["song-boa"] = 19.7, ["song-burningskies"] = 27.64, ["song-christmaslunos"] = 40.75, ["song-citylights"] = 34.13, ["song-deadlyguns"] = 13.54, ["song-helpless"] = 29.71, ["song-imaginary"] = 31.97, ["song-moveitfull"] = 21.8, ["song-oceans"] = 27.08, ["song-paradise"] = 22.65, ["song-pumpit"] = 35.7, ["song-savetik"] = 27.11, ["song-sound2708"] = 24.83, ["song-twilightzone"] = 46.21,
+        ["song-thomas"] = 28.4, ["song-diego"] = 31.97
     };
-    Eq(47, SongShows.All.Length, "één show per dono-sound");
+    Eq(49, SongShows.All.Length, "één show per sound");
     foreach (var (key, seconds) in expected)
     {
         var show = Presets.Create(key);
@@ -463,7 +464,7 @@ TestSync("Song-shows: alle 47 aanwezig, lengte gelijk aan de sound, uitvoerbaar"
         True(show.Steps.Skip(1).Count(s => s.ColorHex == "#000000") <= show.Steps.Count * 0.15, key + ": zwarte stukjes, maar niet te veel");
     }
     var s = DefaultSettings();
-    Eq(47, s.Shows.Count(x => x.PresetKey.StartsWith("song-")), "staan in de lijst met lichtshows");
+    Eq(49, s.Shows.Count(x => x.PresetKey.StartsWith("song-")), "staan in de lijst met lichtshows");
 });
 
 TestSync("Song-shows: opeenvolgende kleuren verschillen sterk (≥ 100°) en er zijn witte flitsen", () =>
@@ -502,7 +503,7 @@ TestSync("Opslag: versie 9 → 10: Rave-varianten weg, koppelingen omgezet, 4 wi
     s.Shows.Add(new LightShow { Id = "preset-song-numb-rave", Name = "♪ Numb · Rave", PresetKey = "song-numb-rave" });
     s.Triggers.Add(new EventTrigger { Name = "eigen", EventType = EventTypes.Gift, GiftNames = "Rose", ShowId = "preset-song-numb-rave" });
     SettingsStore.Migrate(s);
-    Eq(26, s.Version);
+    Eq(27, s.Version);
     Eq(0, s.Shows.Count(x => x.PresetKey.EndsWith("-rave")), "Rave-shows weg");
     Eq("preset-song-numb", s.Triggers.Single(t => t.Name == "eigen").ShowId, "koppeling omgezet");
     Eq(550, s.Lighting.MinChangeMs, "versie 12 zet de limiet op 550 ms");
@@ -516,7 +517,7 @@ TestSync("Opslag: versie 11 → 12: limiet 550 ms, songs en presets vernieuwd, e
     var police = Presets.Create(Presets.Police); police.Steps[0].DurationMs = 320; s.Shows.Add(police);
     var song = Presets.Create("song-numb"); song.Steps.Add(LightStep.Color("#FF0000", 100, 100, 1, 0)); s.Shows.Add(song);
     SettingsStore.Migrate(s);
-    Eq(26, s.Version);
+    Eq(27, s.Version);
     Eq(550, s.Lighting.MinChangeMs);
     Eq(600, s.Shows.Single(x => x.PresetKey == Presets.Police).Steps[0].DurationMs, "Police vernieuwd");
     Eq(Presets.Create("song-numb").Steps.Count, s.Shows.Single(x => x.PresetKey == "song-numb").Steps.Count, "song vernieuwd");
@@ -534,7 +535,7 @@ TestSync("Opslag: versie 3 → 4 zet snelle flitsmodus aan en vernieuwt Police",
     s.Shows.Add(oldPolice);
     SettingsStore.Migrate(s);
     Eq(FlashMode.Black, s.Lighting.FlashMode);
-    Eq(26, s.Version);
+    Eq(27, s.Version);
     True(s.Shows.Single(x => x.PresetKey == Presets.Police).Steps.Count > 1, "Police vernieuwd");
 });
 
@@ -931,7 +932,7 @@ Test("DonateWave: 401 stopt met vragen, 429 wacht, netwerkfout probeert opnieuw 
 TestSync("Opslag: versie 23 → 24 zet naam/bedrag-tijd op 2 s, eigen waarde blijft", () =>
 {
     var s = DefaultSettings(); s.DonateWave.AlertGapMs = 300; s.Version = 23; SettingsStore.Migrate(s);
-    Eq(26, s.Version);
+    Eq(27, s.Version);
     Eq(3240, s.DonateWave.AlertGapMs, "via 2000 naar de gemeten 3240");
     var s2 = DefaultSettings(); s2.DonateWave.AlertGapMs = 1500; s2.Version = 23; SettingsStore.Migrate(s2);
     Eq(1500, s2.DonateWave.AlertGapMs, "zelf ingesteld blijft");
@@ -941,7 +942,7 @@ TestSync("Opslag: versie 25 → 26 zet DonateWave-tijden op de metingen, eigen w
 {
     var s = DefaultSettings(); s.DonateWave.OverlayDelayMs = 250; s.DonateWave.AlertGapMs = 2000; s.DonateWave.BetweenAnimationsMs = 1200;
     s.Version = 25; SettingsStore.Migrate(s);
-    Eq(26, s.Version);
+    Eq(27, s.Version);
     Eq(0, s.DonateWave.OverlayDelayMs); Eq(3240, s.DonateWave.AlertGapMs); Eq(1735, s.DonateWave.BetweenAnimationsMs);
     var s2 = DefaultSettings(); s2.DonateWave.OverlayDelayMs = 400; s2.DonateWave.AlertGapMs = 2500; s2.DonateWave.BetweenAnimationsMs = 900;
     s2.Version = 25; SettingsStore.Migrate(s2);
@@ -954,7 +955,7 @@ TestSync("Opslag: versie 22 → 23 werkt gemeten animatietijden bij, zelf afgest
     s.Triggers.Single(t => t.Id == "tw-special-desertking").StartDelayMs = 10560;   // oude meting
     s.Triggers.Single(t => t.Id == "tw-special-spikygroove").StartDelayMs = 8200;   // zelf afgesteld
     s.Version = 22; SettingsStore.Migrate(s);
-    Eq(26, s.Version);
+    Eq(27, s.Version);
     Eq(10560, s.Triggers.Single(t => t.Id == "tw-special-desertking").StartDelayMs, "videoduur (na alle updates)");
     Eq(8200, s.Triggers.Single(t => t.Id == "tw-special-spikygroove").StartDelayMs, "eigen afstelling blijft");
 });
@@ -980,7 +981,7 @@ TestSync("Opslag: versie 17 → 18 voegt de DonateWave-regels toe zonder eigen r
     var mine = new EventTrigger { Name = "Mijn tip-regel", EventType = EventTypes.Tip, MinCoins = 2000, ShowId = "preset-party" };
     s.Triggers.Add(mine); var count = s.Triggers.Count;
     s.Version = 17; SettingsStore.Migrate(s);
-    Eq(26, s.Version); Eq(count + 14, s.Triggers.Count, "14 regels erbij (3 bedragen + shout-out + 10 specials)");
+    Eq(27, s.Version); Eq(count + 14, s.Triggers.Count, "14 regels erbij (3 bedragen + shout-out + 10 specials)");
     Eq(2000, mine.MinCoins, "eigen regel ongewijzigd");
     SettingsStore.Migrate(s); Eq(count + 14, s.Triggers.Count, "niet dubbel");
 });
@@ -1046,6 +1047,47 @@ Test("Verbindingsdetails: API-adres, HTTP-status en foutcode zichtbaar, sleutel 
     True(rep.Contains("BETTERTOK") && rep.Contains("GOVEE"), "ook BetterTok en lampen");
 });
 
+TestSync("Binnenkomst: Thomas en Diego krijgen hun eigen show, andere kijkers niet", () =>
+{
+    var s = DefaultSettings();
+    var thomas = s.Triggers.Single(t => t.Id == "te-thomas");
+    var diego = s.Triggers.Single(t => t.Id == "te-diego");
+    Eq("preset-song-thomas", thomas.ShowId); Eq("preset-song-diego", diego.ShowId);
+    True(s.Shows.Any(x => x.Id == "preset-song-thomas") || Presets.AllKeys.Contains("song-thomas"), "show Thomas bestaat");
+    Eq(28440, thomas.SoundDurationMs, "volgende show wacht tot de sound van Thomas klaar is");
+    Eq(31974, diego.SoundDurationMs);
+    StreamEvent Join(string user, string display = "") => new() { Type = EventTypes.Member, RawType = "member", User = user, DisplayName = display };
+    Eq("te-thomas", RuleEngine.SelectTrigger(Join("thomas"), s.Triggers)?.Id, "Thomas");
+    Eq("te-thomas", RuleEngine.SelectTrigger(Join("@Thomas"), s.Triggers)?.Id, "hoofdletters en @ maken niet uit");
+    Eq("te-diego", RuleEngine.SelectTrigger(Join("diego_123", "Diego"), s.Triggers)?.Id, "op weergavenaam");
+    True(RuleEngine.SelectTrigger(Join("thomasvdb"), s.Triggers) == null, "andere kijker met bijna dezelfde naam: geen show");
+    True(RuleEngine.SelectTrigger(Join("piet"), s.Triggers) == null, "andere kijker: geen show");
+    // een algemene binnenkomst-regel blijft voor iedereen werken, maar Thomas krijgt zijn eigen
+    s.Triggers.Add(new EventTrigger { Id = "alle", Name = "Iedereen", EventType = EventTypes.Member, ShowId = "preset-" + Presets.Party, Priority = Priorities.Critical });
+    Eq("alle", RuleEngine.SelectTrigger(Join("piet"), s.Triggers)?.Id);
+    Eq("te-thomas", RuleEngine.SelectTrigger(Join("thomas"), s.Triggers)?.Id, "eigen regel gaat voor, ook bij hogere prioriteit van de algemene");
+    // meerdere namen
+    thomas.MatchText = "thomas, tommie";
+    Eq("te-thomas", RuleEngine.SelectTrigger(Join("tommie"), s.Triggers)?.Id, "tweede naam");
+    // songs: 49, de nieuwe twee precies zo lang als de sound
+    var th = SongShows.All.Single(x => x.Key == "song-thomas"); var di = SongShows.All.Single(x => x.Key == "song-diego");
+    var thMs = Presets.Create("song-thomas").TotalDurationMs; var diMs = Presets.Create("song-diego").TotalDurationMs;
+    True(Math.Abs(thMs - 28395) <= 50, $"show Thomas {thMs} ms ≈ sound 28,4 s");
+    True(Math.Abs(diMs - 31974) <= 50, $"show Diego {diMs} ms ≈ sound 32,0 s");
+    Eq(49, SongShows.All.Count());
+});
+
+TestSync("Opslag: versie 26 → 27 voegt de binnenkomst-regels toe (één keer)", () =>
+{
+    var s = DefaultSettings();
+    foreach (var t in s.Triggers.Where(t => t.Id.StartsWith("te-")).ToList()) s.Triggers.Remove(t);
+    s.Version = 26; SettingsStore.Migrate(s);
+    Eq(27, s.Version);
+    Eq(2, s.Triggers.Count(t => t.Id.StartsWith("te-")));
+    SettingsStore.Migrate(s);
+    Eq(2, s.Triggers.Count(t => t.Id.StartsWith("te-")), "niet dubbel");
+});
+
 TestSync("Kerst-overlays: tips tellen voor doel, ranking, recent, vandaag en weekkampioen", () =>
 {
     var dir = TempDir();
@@ -1069,9 +1111,11 @@ TestSync("Kerst-overlays: tips tellen voor doel, ranking, recent, vandaag en wee
     var rk = j.GetProperty("ranking");
     Eq("Bram", rk[0].GetProperty("name").GetString()); Eq("€ 20,00", rk[0].GetProperty("amount").GetString());
     Eq("anna", rk[1].GetProperty("name").GetString(), "Anna + anna samen"); Eq("€ 15,00", rk[1].GetProperty("amount").GetString());
-    Eq(3, j.GetProperty("recent").GetArrayLength(), "testtip niet in recent");
-    Eq("anna", j.GetProperty("recent")[0].GetProperty("name").GetString(), "nieuwste eerst");
-    Eq("Fijne kerst!", j.GetProperty("recent")[2].GetProperty("message").GetString());
+    Eq(4, j.GetProperty("recent").GetArrayLength(), "testtip wel zichtbaar in recent");
+    Eq("TestViewer", j.GetProperty("recent")[0].GetProperty("name").GetString(), "nieuwste eerst");
+    True(j.GetProperty("recent")[0].GetProperty("test").GetBoolean(), "gemarkeerd als test");
+    Eq("TestViewer", j.GetProperty("last").GetProperty("name").GetString(), "laatste supporter ook bij test");
+    Eq("Fijne kerst!", j.GetProperty("recent")[3].GetProperty("message").GetString());
     Eq(3, j.GetProperty("today").GetProperty("count").GetInt32(), "vandaag zonder testtip");
     Eq("Bram", j.GetProperty("weekChampion").GetProperty("name").GetString());
     Eq(1, j.GetProperty("alerts").GetArrayLength(), "alleen de nieuwe alert (testtip ook), oude zijn al voorbij");
@@ -1113,6 +1157,9 @@ Test("Kerst-overlays: server op localhost geeft pagina's en de stand", async () 
         var html = await http.GetStringAsync($"http://127.0.0.1:7590/kerst/{v.Path}");
         True(html.Contains($"data-view=\"{v.Path}\""), v.Path);
         True(!html.Contains("__"), "geen lege plaatshouders in " + v.Path);
+        var html2 = await http.GetStringAsync(OverlayServer.ViewUrl(7590, v.Path));
+        True(html2.Contains($"data-view=\"{v.Path}\""), v.Path + ".html (voor TikTok LIVE Studio)");
+        True(OverlayServer.ViewUrl(7590, v.Path).EndsWith(".html"), "eindigt op .html");
     }
     True((await http.GetStringAsync("http://127.0.0.1:7590/")).Contains("/kerst/alert"), "overzicht");
     var nf = await http.GetAsync("http://127.0.0.1:7590/geheim");
@@ -1123,6 +1170,65 @@ Test("Kerst-overlays: server op localhost geeft pagina's en de stand", async () 
     True(!second.IsRunning && second.Status.Contains("7590"), second.Status);
     o.Enabled = false; server.Apply();
     True(!server.IsRunning, "uit");
+});
+
+Test("Kerst-overlays: https met eigen certificaat voor kerst.slc-overlay.nl (TikTok LIVE Studio)", async () =>
+{
+    var dir = TempDir();
+    var cert = OverlayCert.LoadOrCreate(dir);
+    True(cert.Leaf.HasPrivateKey, "sleutel aanwezig");
+    Eq(cert.Ca.Subject, cert.Leaf.Issuer, "ondertekend door eigen basiscertificaat");
+    True(cert.Leaf.NotAfter > DateTime.Now.AddDays(700), "ruim 2 jaar geldig");
+    var again = OverlayCert.LoadOrCreate(dir);
+    Eq(cert.Leaf.Thumbprint, again.Leaf.Thumbprint, "zelfde certificaat na herstart (niet steeds opnieuw vertrouwen)");
+    var stats = new DonationStats(dir);
+    var o = new OverlayOptions { Port = 7594 };
+    var logs = new System.Collections.Concurrent.ConcurrentQueue<string>();
+    using var server = new OverlayServer(stats, () => o, logs.Enqueue, () => cert.Leaf);
+    server.Apply();
+    True(server.TlsRunning, "https draait");
+    Eq(7595, server.TlsPort);
+    Eq("https://kerst.slc-overlay.nl:7595/kerst/alles.html", OverlayServer.TikTokUrl(7594, "alles"));
+    string? chainError = null;
+    var handler = new SocketsHttpHandler
+    {
+        UseProxy = false,   // rechtstreeks naar de app, niet via een proxy
+        // de domeinnaam naar 127.0.0.1 laten wijzen, zoals het hosts-bestand doet
+        ConnectCallback = async (ctx, ct) =>
+        {
+            var sock = new System.Net.Sockets.Socket(System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Tcp);
+            await sock.ConnectAsync(System.Net.IPAddress.Loopback, ctx.DnsEndPoint.Port, ct);
+            return new System.Net.Sockets.NetworkStream(sock, true);
+        },
+        SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+        {
+            // zoals een browser die het basiscertificaat vertrouwt: keten + domeinnaam moeten kloppen
+            RemoteCertificateValidationCallback = (_, c, _, errors) =>
+            {
+                if ((errors & System.Net.Security.SslPolicyErrors.RemoteCertificateNameMismatch) != 0) { chainError = "naam klopt niet"; return false; }
+                using var chain = new System.Security.Cryptography.X509Certificates.X509Chain();
+                chain.ChainPolicy.TrustMode = System.Security.Cryptography.X509Certificates.X509ChainTrustMode.CustomRootTrust;
+                chain.ChainPolicy.CustomTrustStore.Add(cert.Ca);
+                chain.ChainPolicy.RevocationMode = System.Security.Cryptography.X509Certificates.X509RevocationMode.NoCheck;
+                var ok = chain.Build(new System.Security.Cryptography.X509Certificates.X509Certificate2(c!));
+                if (!ok) chainError = string.Join(", ", chain.ChainStatus.Select(x => x.StatusInformation));
+                return ok;
+            }
+        }
+    };
+    using var http = new HttpClient(handler);
+    string html;
+    try { html = await http.GetStringAsync("https://kerst.slc-overlay.nl:7595/kerst/alles.html"); }
+    catch (Exception ex) { await Task.Delay(300); throw new Exception($"https mislukt: {ex.InnerException?.GetType().Name}: {ex.InnerException?.Message} | {ex.InnerException?.InnerException?.Message} | keten: {chainError} | server: {string.Join(" / ", logs)}"); }
+    True(chainError == null, "certificaat geldig: " + chainError);
+    True(html.Contains("data-view=\"alles\""), "pagina via https");
+    var state = await http.GetStringAsync("https://kerst.slc-overlay.nl:7595/api/state");
+    True(state.Contains("\"goal\""), "stand via https");
+    // gewoon http blijft werken (OBS)
+    using var plain = new HttpClient();
+    True((await plain.GetStringAsync(OverlayServer.ViewUrl(7594, "doel"))).Contains("data-view=\"doel\""), "http voor OBS");
+    server.Stop();
+    True(!server.TlsRunning && !server.IsRunning, "alles uit");
 });
 
 Test("Kerst-overlays: DonateWave-tip komt in de overlays, ook zonder lichtregel", async () =>
@@ -1798,7 +1904,7 @@ TestSync("Opslag: versie 13 → 14: rave-shows en geen snelheidslimiet bij direc
     s.Lighting.DirectColor = true; s.Lighting.MinChangeMs = 300;
     var old = Presets.Create("song-numb"); old.Steps.RemoveAt(0); s.Shows.Add(old);
     SettingsStore.Migrate(s);
-    Eq(26, s.Version);
+    Eq(27, s.Version);
     Eq(40, s.Lighting.MinChangeMs);
     ShowTiers.Apply(s);
     Eq(Presets.ToData(Presets.Create("song-numb", true).Steps), Presets.ToData(s.Shows[0].Steps), "rave-versie actief");
@@ -1831,7 +1937,7 @@ TestSync("Opslag: versie 12 → 13: songs krijgen twee versies, direct springen 
     s.Lighting.MinChangeMs = 550;
     var old = Presets.Create("song-numb"); old.FastData = ""; old.SafeData = ""; old.Steps.RemoveAt(0); s.Shows.Add(old);
     SettingsStore.Migrate(s);
-    Eq(26, s.Version);
+    Eq(27, s.Version);
     Eq(40, s.Lighting.MinChangeMs, "versie 13 zet 300, versie 14 daarna 40");
     True(s.Shows[0].HasTiers, "song heeft club + veilig");
     ShowTiers.Apply(s);
@@ -1921,8 +2027,8 @@ TestSync("Opslag: versie 15 → 16 voegt alle dono-sounds toe, koppelt ze zoals 
     s.Triggers.Add(new EventTrigger { Name = "Mijn eigen regel", EventType = EventTypes.Gift, GiftNames = "Leeuw", ShowId = weg.Id });
     var t30000 = s.Triggers.Single(t => t.Id == "tf-30000"); t30000.ShowId = "preset-megagift"; t30000.Name = "Gift 30000+ coins";
     SettingsStore.Migrate(s); SettingsStore.EnsureDefaults(s, false);
-    Eq(26, s.Version);
-    Eq(47, s.Shows.Count(x => x.PresetKey.StartsWith("song-")), "47 song-shows");
+    Eq(27, s.Version);
+    Eq(49, s.Shows.Count(x => x.PresetKey.StartsWith("song-")), "49 song-shows");
     True(s.Shows.All(x => x.PresetKey != "song-oud"), "sound die niet meer bestaat is weg");
     True(s.Triggers.All(t => t.Id != "tf-oud"), "standaardkoppeling naar die sound is weg");
     Eq("", s.Triggers.Single(t => t.Name == "Mijn eigen regel").ShowId, "eigen regel blijft, zonder show");

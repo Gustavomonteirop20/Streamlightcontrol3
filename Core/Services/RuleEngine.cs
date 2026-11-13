@@ -72,6 +72,15 @@ public sealed class RuleEngine
                 .FirstOrDefault();
         }
 
+        if (e.Type == EventTypes.Member)
+        {
+            // Binnenkomst: een regel met een gebruikersnaam geldt alleen voor die kijker; regels zonder naam voor iedereen
+            var who = candidates.Where(t => t.MatchText.Length > 0 && UserMatches(t.MatchText, e))
+                .OrderByDescending(t => t.Priority).FirstOrDefault();
+            if (who != null) return who;
+            return candidates.Where(t => t.MatchText.Length == 0).OrderByDescending(t => t.Priority).FirstOrDefault();
+        }
+
         if (e.Type == EventTypes.Comment)
         {
             return candidates
@@ -82,6 +91,21 @@ public sealed class RuleEngine
         }
 
         return candidates.OrderByDescending(t => t.Priority).FirstOrDefault();
+    }
+
+    /// <summary>Komt de kijker overeen met een van de namen (gescheiden door komma's)? Vergelijkt de TikTok-naam (@…)
+    /// en de weergavenaam, zonder hoofdletters en zonder @.</summary>
+    public static bool UserMatches(string names, StreamEvent e)
+    {
+        static string N(string? s) => (s ?? "").Trim().TrimStart('@').Trim().ToLowerInvariant();
+        var user = N(e.User); var display = N(e.DisplayName);
+        foreach (var raw in names.Split(',', ';'))
+        {
+            var n = N(raw);
+            if (n.Length == 0) continue;
+            if (n == user || n == display) return true;
+        }
+        return false;
     }
 
     private static long RangeWidth(EventTrigger t) => (t.MinCoins, t.MaxCoins) switch

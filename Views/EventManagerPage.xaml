@@ -27,6 +27,10 @@
                                 ToolTip="Doet alsof er een tip van € 5 binnenkomt via DonateWave"/>
                         <Button Style="{StaticResource SmallButton}" Tag="&#xE789;" Content="Shout-out" Margin="0,0,16,6" CommandParameter="shoutout" Click="Simulate_Click"
                                 ToolTip="Doet alsof er een DonateWave shout-out van € 5 binnenkomt"/>
+                        <Button Style="{StaticResource SmallButton}" Tag="&#xE77B;" Content="Thomas komt binnen" Margin="0,0,16,6" CommandParameter="member:thomas" Click="Simulate_Click"
+                                ToolTip="Doet alsof Thomas de LIVE binnenkomt"/>
+                        <Button Style="{StaticResource SmallButton}" Tag="&#xE77B;" Content="Diego komt binnen" Margin="0,0,16,6" CommandParameter="member:diego" Click="Simulate_Click"
+                                ToolTip="Doet alsof Diego de LIVE binnenkomt"/>
                         <TextBox x:Name="SimGiftName" ui:Hint.Text="Giftnaam (bijv. Rose)" Width="170" MinHeight="30" Margin="0,0,6,6"/>
                         <TextBox x:Name="SimCoins" ui:Hint.Text="Coins" Text="100" Width="80" MinHeight="30" Margin="0,0,6,6"/>
                         <Button Style="{StaticResource SmallButton}" Tag="&#xE734;" Content="Gift" Margin="0,0,6,6" CommandParameter="gift" Click="Simulate_Click"/>
@@ -185,6 +189,13 @@
                             <TextBlock Text="VOORWAARDEN – COMMENT" Style="{StaticResource Overline}" Margin="0,0,0,10"/>
                             <TextBlock Text="Alleen als de comment dit bevat" Style="{StaticResource FieldLabel}"/>
                             <TextBox Text="{Binding MatchText, UpdateSourceTrigger=LostFocus}" ui:Hint.Text="Leeg = elke comment, bijv. !rainbow" Margin="0,0,0,18"/>
+                        </StackPanel>
+                        <StackPanel x:Name="MemberSection">
+                            <TextBlock Text="VOORWAARDEN – BINNENKOMST" Style="{StaticResource Overline}" Margin="0,0,0,10"/>
+                            <TextBlock Text="Alleen voor deze kijker(s)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding MatchText, UpdateSourceTrigger=LostFocus}" ui:Hint.Text="Leeg = iedereen, bijv. thomas" Margin="0,0,0,6"/>
+                            <TextBlock Style="{StaticResource Caption}" Margin="0,0,0,18" TextWrapping="Wrap"
+                                       Text="De TikTok-naam (zonder @) of de weergavenaam, precies zoals op TikTok. Meerdere kijkers: scheiden met een komma."/>
                         </StackPanel>
                         <StackPanel x:Name="LikeSection">
                             <TextBlock Text="VOORWAARDEN – LIKES" Style="{StaticResource Overline}" Margin="0,0,0,10"/>

@@ -75,6 +75,7 @@ public partial class EventManagerPage : UserControl
     {
         GiftSection.Visibility = t?.EventType == EventTypes.Gift ? Visibility.Visible : Visibility.Collapsed;
         CommentSection.Visibility = t?.EventType == EventTypes.Comment ? Visibility.Visible : Visibility.Collapsed;
+        MemberSection.Visibility = t?.EventType == EventTypes.Member ? Visibility.Visible : Visibility.Collapsed;
         LikeSection.Visibility = t?.EventType == EventTypes.Like ? Visibility.Visible : Visibility.Collapsed;
         TipSection.Visibility = t?.EventType == EventTypes.Tip ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -119,13 +120,15 @@ public partial class EventManagerPage : UserControl
             EventTypes.Tip => StreamEvent.Test(EventTypes.Tip, EventTrigger.Euro(500), 500),
             "shoutout" => new StreamEvent { Type = EventTypes.Tip, RawType = "tip.received", DisplayName = "Test · shout-out", GiftName = EventTrigger.Euro(500) + " · shout-out",
                                             TotalCoins = 500, CoinsPerItem = 500, TipKind = TipKinds.Shoutout, IsTest = true, DedupeKey = "test:" + Guid.NewGuid().ToString("N") },
+            _ when type.StartsWith("member:") => new StreamEvent { Type = EventTypes.Member, RawType = "member", User = type[7..], DisplayName = type[7..],
+                                                                   IsTest = true, DedupeKey = "test:" + Guid.NewGuid().ToString("N") },
             _ => StreamEvent.Test(type)
         };
         var entry = App.Controller.Simulate(ev);
         SimResult.Visibility = Visibility.Visible;
         SimResult.Text = entry == null
             ? "Niet verwerkt."
-            : $"{(type == "shoutout" ? "Shout-out" : EventTypes.Label(type))}: {entry.StatusLabel}" + (string.IsNullOrEmpty(entry.ShowName) ? "" : $" → ‘{entry.ShowName}’") + $"  ({entry.Detail})";
+            : $"{(type == "shoutout" ? "Shout-out" : type.StartsWith("member:") ? "Binnenkomst " + type[7..] : EventTypes.Label(type))}: {entry.StatusLabel}" + (string.IsNullOrEmpty(entry.ShowName) ? "" : $" → ‘{entry.ShowName}’") + $"  ({entry.Detail})";
         if (App.Controller.Targets.Count == 0 && entry?.Status == ProcessingStatus.Queued)
             SimResult.Text += "  Let op: er is geen actieve lamp.";
     }
