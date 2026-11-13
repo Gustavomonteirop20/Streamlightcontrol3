@@ -1066,6 +1066,35 @@ Test("Verbindingsdetails: API-adres, HTTP-status en foutcode zichtbaar, sleutel 
     True(rep.Contains("BETTERTOK") && rep.Contains("GOVEE"), "ook BetterTok en lampen");
 });
 
+TestSync("Zones: Direct-pakket met eigen kleur per zone en segmentpakket (ptReal) byte voor byte", () =>
+{
+    var p = GoveeLanClient.DirectZonesPacket(new (byte, byte, byte)[] { (255, 0, 0), (0, 255, 0), (0, 0, 255) });
+    Eq("BB 00 0B B0 01 03 FF 00 00 00 FF 00 00 00 FF", string.Join(" ", p.Take(15).Select(b => b.ToString("X2"))), "kop, aantal en kleuren per zone");
+    Eq(p.Take(p.Length - 1).Aggregate((byte)0, (x, b) => (byte)(x ^ b)), p[^1], "controlebyte");
+    // zelfde kleur overal = oude pakket voor de hele strip
+    True(GoveeLanClient.DirectZonesPacket(Enumerable.Repeat(((byte)1, (byte)2, (byte)3), 20).ToList()).SequenceEqual(GoveeLanClient.DirectColorPacket(1, 2, 3, 20)), "gelijk aan hele-strip-pakket");
+    var f = GoveeLanClient.SegmentColorFrame(0x12, 0x34, 0x56, (1 << 0) | (1 << 9) | (1 << 14));
+    Eq(20, f.Length);
+    Eq("33 05 15 01 12 34 56 00 00 00 00 00 01 42 00 00 00 00 00", string.Join(" ", f.Take(19).Select(b => b.ToString("X2"))), "segment 1, 10 en 15");
+    Eq(f.Take(19).Aggregate((byte)0, (x, b) => (byte)(x ^ b)), f[19], "XOR over byte 0–18");
+    Eq("1,2,3,18,19,20", string.Join(",", GoveeDeviceConfig.ParseZones("1-3, 18–20", 20)), "zones uit tekst");
+    Eq("5,6", string.Join(",", GoveeDeviceConfig.ParseZones("0, 5 6, 99, 20-18x", 15)), "alleen geldige nummers");
+});
+
+Test("Zones: segmentkleuren gaan als ptReal naar de strip (zelfde kleur samen, max 12 per bericht)", async () =>
+{
+    using var lamp = new FakeGoveeDevice(ScanPort, ControlPort, ListenPort);
+    var govee = NewGovee();
+    var zones = Enumerable.Range(0, 15).Select(i => i is 13 or 14 ? ((byte)255, (byte)200, (byte)0) : ((byte)0, (byte)0, (byte)40)).ToList();
+    await govee.SegmentColorsAsync("127.0.0.1", zones);
+    await WaitFor(() => lamp.Commands.Any(m => m.cmd == "ptReal"), 2000, "ptReal ontvangen");
+    var cmds = lamp.Commands.Last(m => m.cmd == "ptReal").data.GetProperty("command");
+    Eq(2, cmds.GetArrayLength(), "twee kleuren = twee pakketjes");
+    var masks = cmds.EnumerateArray().Select(c => Convert.FromBase64String(c.GetString()!)).Select(b => b[12] | (b[13] << 8)).OrderBy(x => x).ToArray();
+    Eq((1 << 13) - 1, masks[0], "segment 1–13 blauw");
+    Eq((1 << 13) | (1 << 14), masks[1], "segment 14 en 15 geel");
+});
+
 TestSync("Binnenkomst: Thomas en Diego krijgen hun eigen show, andere kijkers niet", () =>
 {
     var s = DefaultSettings();

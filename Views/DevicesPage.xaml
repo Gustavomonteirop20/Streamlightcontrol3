@@ -215,6 +215,25 @@
                                 ToolTip="Laat je strip steeds sneller wit/zwart knipperen. Daarna kies je tot waar hij het bijhield; alle shows passen zich daarop aan."/>
                         <Button Style="{StaticResource SecondaryButton}" Tag="&#xEA80;" Content="Testkleur sturen" Margin="0,8,0,0" HorizontalAlignment="Stretch" Click="TestColor_Click"
                                 ToolTip="Laat de lamp 2× paars knipperen en zet hem daarna terug zoals hij was"/>
+
+                        <Border Background="{StaticResource ElevatedBrush}" CornerRadius="10" Padding="14,12" Margin="0,16,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Zones op stream (test)" FontWeight="SemiBold"/>
+                                <TextBlock Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,6,0,10"
+                                           Text="Zoek uit welke stukjes van de strip op stream te zien zijn. De test laat zone voor zone geel oplichten (de rest zacht blauw) en toont hieronder het nummer. Kijk mee in je stream-preview en schrijf op welke nummers je ziet. Probeer eerst A; doet de strip niets of de hele strip tegelijk, probeer dan B."/>
+                                <TextBlock Text="Aantal zones" Style="{StaticResource FieldLabel}"/>
+                                <TextBox Text="{Binding ZoneCount, UpdateSourceTrigger=LostFocus}" Width="90" HorizontalAlignment="Left"
+                                         ToolTip="Methode A: probeer 20 (standaard). Methode B: maximaal 16 segmenten; de H619E heeft er meestal 15."/>
+                                <Button Style="{StaticResource SecondaryButton}" Content="A: Direct-zones langslopen" Margin="0,10,0,0" HorizontalAlignment="Stretch" Click="ZonesDirect_Click"/>
+                                <Button Style="{StaticResource SecondaryButton}" Content="B: Segmenten langslopen (onofficieel)" Margin="0,8,0,0" HorizontalAlignment="Stretch" Click="ZonesSegment_Click"/>
+                                <Button Style="{StaticResource GhostButton}" Content="Test stoppen" Margin="0,8,0,0" HorizontalAlignment="Left" Click="ZonesStop_Click"/>
+                                <TextBlock x:Name="ZoneNow" Text="" FontSize="26" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap" Margin="0,10,0,0"/>
+                                <TextBlock Text="Welke zones zie je op stream?" Style="{StaticResource FieldLabel}" Margin="0,12,0,0"/>
+                                <TextBox Text="{Binding VisibleZones, UpdateSourceTrigger=LostFocus}" ui:Hint.Text="bijv. 1-3, 18-20"/>
+                                <Button Style="{StaticResource SecondaryButton}" Content="Laat alleen deze zones oplichten" Margin="0,8,0,0" HorizontalAlignment="Stretch" Click="ZonesShowVisible_Click"
+                                        ToolTip="Controle: de zones die je invulde worden 5 seconden warm geel, de rest gaat uit."/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>

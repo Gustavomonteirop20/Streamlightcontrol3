@@ -328,6 +328,12 @@ Sound en show lopen gelijk: de app rekent vanaf het moment van de tip (DonateWav
 Versie 3.18: de overlay laat een tip iets later zien dan het moment van de tip (ontvangen + animatie en
 geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later laten beginnen dan de tip" op de
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
+ZONES-TEST (versie 3.31) – Device Manager › kies je strip › "Zones op stream (test)".
+Zoekt uit welke stukjes van de strip op stream te zien zijn, als voorbereiding op shows waarbij alleen die stukjes
+(of elk stukje apart) meedoen. Methode A gebruikt de Direct-modus (snel, ook voor shows op de beat);
+methode B de onofficiële segment-opdracht (ptReal) als reserve. Zone voor zone licht geel op en het nummer staat
+in beeld. Vul in welke nummers je op stream zag (bijv. 1-3, 18-20) en controleer met "Laat alleen deze zones oplichten".
+
 BINNENKOMST-SHOWS (versie 3.30) – Regels › "♪ Binnenkomst Thomas" en "♪ Binnenkomst Diego".
 Komt Thomas of Diego de LIVE binnen (BetterTok: join/member), dan speelt zijn eigen ♪-show op zijn binnenkomst-sound
 (Thomas: kinderliedje, gezellige show met warme kleuren en zachte overgangen, 28,4 s; Diego "Black Water" 160 BPM festival, 32,0 s). De volgende show wacht tot de sound klaar is.

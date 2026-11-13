@@ -245,6 +245,49 @@ public sealed class GoveeLanClient : IDisposable
 
     public static byte[] DirectEnablePacket(bool on) => WithChecksum(new byte[] { 0xBB, 0x00, 0x01, 0xB1, (byte)(on ? 1 : 0) });
 
+    /// <summary>Elke zone een eigen kleur (Direct-modus). Zone 1 = begin van de strip (bij de controller).</summary>
+    public Task DirectZonesAsync(string ip, IReadOnlyList<(byte r, byte g, byte b)> zones, CancellationToken token = default) =>
+        SendCommandAsync(ip, "razer", new { pt = Convert.ToBase64String(DirectZonesPacket(zones)) }, token);
+
+    public static byte[] DirectZonesPacket(IReadOnlyList<(byte r, byte g, byte b)> zones)
+    {
+        var count = Math.Clamp(zones.Count, 1, 255);
+        var len = 2 + 3 * count;
+        var p = new List<byte> { 0xBB, (byte)(len >> 8), (byte)(len & 0xFF), 0xB0, 0x01, (byte)count };
+        for (var i = 0; i < count; i++) { var z = i < zones.Count ? zones[i] : ((byte)0, (byte)0, (byte)0); p.Add(z.Item1); p.Add(z.Item2); p.Add(z.Item3); }
+        return WithChecksum(p.ToArray());
+    }
+
+    // ---------------------------------------------------------------- Segmenten (onofficieel, ptReal)
+    // Niet door Govee beschreven, wel door de community: Bluetooth-pakketjes van 20 bytes via LAN.
+    // 33 05 15 01 R G B 00 00 00 00 00 [masker laag] [masker hoog] 00 00 00 00 00 [XOR van byte 0–18]
+    // Bit n van het masker = segment n+1. Max. 12 pakketjes per bericht; berichten 50 ms uit elkaar.
+
+    public static byte[] SegmentColorFrame(byte r, byte g, byte b, int mask)
+    {
+        var f = new byte[20];
+        f[0] = 0x33; f[1] = 0x05; f[2] = 0x15; f[3] = 0x01;
+        f[4] = r; f[5] = g; f[6] = b;
+        f[12] = (byte)(mask & 0xFF); f[13] = (byte)((mask >> 8) & 0xFF);
+        byte x = 0;
+        for (var i = 0; i < 19; i++) x ^= f[i];
+        f[19] = x;
+        return f;
+    }
+
+    /// <summary>Per segment een kleur via ptReal. Segmenten met dezelfde kleur gaan samen in één pakketje.</summary>
+    public async Task SegmentColorsAsync(string ip, IReadOnlyList<(byte r, byte g, byte b)> segments, CancellationToken token = default)
+    {
+        var frames = segments.Select((c, i) => (c, i)).Where(x => x.i < 16)
+            .GroupBy(x => x.c).Select(g => SegmentColorFrame(g.Key.Item1, g.Key.Item2, g.Key.Item3, g.Aggregate(0, (m, x) => m | (1 << x.i))))
+            .Select(Convert.ToBase64String).ToList();
+        for (var k = 0; k < frames.Count; k += 12)
+        {
+            if (k > 0) await Task.Delay(50, token);
+            await SendCommandAsync(ip, "ptReal", new { command = frames.Skip(k).Take(12).ToArray() }, token);
+        }
+    }
+
     public static byte[] DirectColorPacket(byte r, byte g, byte b, int count)
     {
         count = Math.Clamp(count, 1, 255);

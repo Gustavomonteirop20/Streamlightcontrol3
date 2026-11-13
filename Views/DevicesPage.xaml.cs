@@ -273,6 +273,85 @@ public partial class DevicesPage : UserControl, IPageActivated
         catch (Exception ex) { C.Errors.Report("gv.send", ex.Message); Ui.Toast("Helderheid niet verzonden: " + ex.Message, ToastKind.Error); }
     }
 
+    // ---------------------------------------------------------------- Zones-test
+
+    private CancellationTokenSource? _zoneCts;
+
+    private static (byte, byte, byte) Hsv(double h)
+    {
+        var c = 1.0; var x = c * (1 - Math.Abs(h / 60 % 2 - 1));
+        var (r, g, b) = h < 60 ? (c, x, 0.0) : h < 120 ? (x, c, 0.0) : h < 180 ? (0.0, c, x) : h < 240 ? (0.0, x, c) : h < 300 ? (x, 0.0, c) : (c, 0.0, x);
+        return ((byte)(r * 255), (byte)(g * 255), (byte)(b * 255));
+    }
+
+    private async Task SendZones(GoveeDeviceConfig dev, bool segment, IReadOnlyList<(byte, byte, byte)> zones, CancellationToken token)
+    {
+        if (segment) await C.Govee.SegmentColorsAsync(dev.Ip, zones, token);
+        else await C.Govee.DirectZonesAsync(dev.Ip, zones, token);
+    }
+
+    private async Task ZoneTest(Func<GoveeDeviceConfig, bool, int, CancellationToken, Task> body, bool segment)
+    {
+        if (_selected == null) return;
+        var dev = _selected;
+        var count = segment ? Math.Min(dev.ZoneCount, 16) : dev.ZoneCount;
+        _zoneCts?.Cancel();
+        var cts = _zoneCts = new CancellationTokenSource();
+        var wasPaused = C.Queue.Paused;
+        C.Queue.StopCurrent();                       // geen shows tijdens de test
+        try
+        {
+            if (segment) { await C.Govee.DirectModeAsync(dev.Ip, false, cts.Token); await C.Govee.PowerAsync(dev.Ip, true, cts.Token); }
+            else await C.Govee.DirectModeAsync(dev.Ip, true, cts.Token);
+            await body(dev, segment, count, cts.Token);
+        }
+        catch (OperationCanceledException) { ZoneNow.Text = "Test gestopt."; }
+        catch (Exception ex) { ZoneNow.Text = "Fout: " + ex.Message; }
+        finally
+        {
+            try { if (!segment) await C.Govee.DirectModeAsync(dev.Ip, false); } catch { }
+            C.Engine.ForgetState();
+            if (!wasPaused) C.Queue.Resume();
+            if (_zoneCts == cts) _zoneCts = null;
+        }
+    }
+
+    private async Task WalkZones(GoveeDeviceConfig dev, bool segment, int count, CancellationToken token)
+    {
+        dev.ZoneMethod = segment ? "segment" : "direct";
+        for (var i = 1; i <= count; i++)
+        {
+            ZoneNow.Text = $"{(segment ? "Segment" : "Zone")} {i} van {count}";
+            var zones = Enumerable.Range(1, count).Select(z => z == i ? ((byte)255, (byte)190, (byte)0) : ((byte)0, (byte)0, (byte)40)).ToList();
+            await SendZones(dev, segment, zones, token);
+            await Task.Delay(1800, token);
+        }
+        ZoneNow.Text = "Regenboog: elke zone een andere kleur";
+        await SendZones(dev, segment, Enumerable.Range(0, count).Select(z => Hsv(360.0 * z / count)).ToList(), token);
+        await Task.Delay(4000, token);
+        ZoneNow.Text = "Klaar. Vul hieronder in welke nummers je op stream zag (bijv. 1-3, 18-20).";
+    }
+
+    private async void ZonesDirect_Click(object sender, RoutedEventArgs e) => await ZoneTest(WalkZones, segment: false);
+
+    private async void ZonesSegment_Click(object sender, RoutedEventArgs e) => await ZoneTest(WalkZones, segment: true);
+
+    private void ZonesStop_Click(object sender, RoutedEventArgs e) => _zoneCts?.Cancel();
+
+    private async void ZonesShowVisible_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selected == null) return;
+        var visible = GoveeDeviceConfig.ParseZones(_selected.VisibleZones, _selected.ZoneCount);
+        if (visible.Count == 0) { Ui.Toast("Vul eerst in welke zones je op stream ziet, bijv. 1-3, 18-20.", ToastKind.Warning); return; }
+        await ZoneTest(async (dev, segment, count, token) =>
+        {
+            ZoneNow.Text = $"Alleen zones {dev.VisibleZones} branden (5 s)";
+            await SendZones(dev, segment, Enumerable.Range(1, count).Select(z => visible.Contains(z) ? ((byte)255, (byte)170, (byte)40) : ((byte)0, (byte)0, (byte)0)).ToList(), token);
+            await Task.Delay(5000, token);
+            ZoneNow.Text = "Zag je precies de stukjes die op stream staan? Dan klopt het.";
+        }, segment: _selected.ZoneMethod == "segment");
+    }
+
     private async void DirectTest_Click(object sender, RoutedEventArgs e)
     {
         if (_selected == null) return;

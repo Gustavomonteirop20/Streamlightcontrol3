@@ -48,6 +48,31 @@ public sealed class GoveeDeviceConfig : ObservableObject
     /// <summary>Meedoen met lichtshows en snelle acties.</summary>
     public bool Enabled { get => _enabled; set => Set(ref _enabled, value); }
 
+    // Zones / segmenten (uit de zones-test)
+    private int _zoneCount = 20;
+    /// <summary>Aantal zones dat de app stuurt (Direct-modus) of aantal segmenten (segment-methode).</summary>
+    public int ZoneCount { get => _zoneCount; set => Set(ref _zoneCount, Math.Clamp(value, 1, 60)); }
+    private string _zoneMethod = "direct";
+    /// <summary>"direct" (realtime-protocol) of "segment" (onofficieel ptReal). Welke werkt, blijkt uit de test.</summary>
+    public string ZoneMethod { get => _zoneMethod; set => Set(ref _zoneMethod, value == "segment" ? "segment" : "direct"); }
+    private string _visibleZones = "";
+    /// <summary>Zones die op stream te zien zijn, bijv. "1-3, 18-20" (leeg = nog niet ingesteld).</summary>
+    public string VisibleZones { get => _visibleZones; set => Set(ref _visibleZones, value?.Trim() ?? ""); }
+
+    /// <summary>"1-3, 18-20" → {1,2,3,18,19,20} (alleen geldige nummers tot ZoneCount).</summary>
+    public static SortedSet<int> ParseZones(string text, int max)
+    {
+        var set = new SortedSet<int>();
+        foreach (var part in (text ?? "").Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var p = part.Split('-', '–');
+            if (p.Length == 1 && int.TryParse(p[0], out var n)) { if (n >= 1 && n <= max) set.Add(n); }
+            else if (p.Length == 2 && int.TryParse(p[0], out var a) && int.TryParse(p[1], out var b))
+                for (var i = Math.Max(1, Math.Min(a, b)); i <= Math.Min(max, Math.Max(a, b)); i++) set.Add(i);
+        }
+        return set;
+    }
+
     // Live status (niet opgeslagen)
     private bool? _online;
     private DeviceStatus? _status;
