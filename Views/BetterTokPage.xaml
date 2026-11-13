@@ -1,0 +1,220 @@
+<UserControl x:Class="StreamLightControl2.Views.BetterTokPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:StreamLightControl2.Controls">
+    <Grid Margin="24,22,24,24">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="440"/>
+            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Status -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="10" Height="10" Fill="{Binding BetterTokBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding BetterTokText}" Style="{StaticResource H2}" Margin="12,0,0,0"/>
+                        </StackPanel>
+                        <TextBlock x:Name="ConnectedUrl" Style="{StaticResource Caption}" Margin="22,6,0,0"/>
+                        <TextBlock Text="{Binding LastMessageText}" Style="{StaticResource Caption}" Margin="22,2,0,0"/>
+
+                        <!-- Waarom mislukt het? -->
+                        <Border x:Name="ProblemBox" Background="{StaticResource DangerSoftBrush}" CornerRadius="10" Padding="14,12" Margin="0,16,0,0" Visibility="Collapsed">
+                            <StackPanel>
+                                <TextBlock x:Name="ProblemTitle" FontWeight="SemiBold" Foreground="{StaticResource DangerBrush}"/>
+                                <TextBlock x:Name="ProblemText" Style="{StaticResource Muted}" Margin="0,6,0,0"/>
+                                <TextBlock Text="Oplossing" FontWeight="SemiBold" Margin="0,10,0,0"/>
+                                <TextBlock x:Name="ProblemSolution" Style="{StaticResource Muted}" Margin="0,4,0,0"/>
+                                <TextBlock x:Name="ProblemDetail" Style="{StaticResource Caption}" Margin="0,8,0,0" FontFamily="{StaticResource MonoFont}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                            <Button x:Name="ConnectButton" Style="{StaticResource PrimaryButton}" Tag="&#xE71B;" Content="Verbinden" Margin="0,0,8,0" Click="Connect_Click"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="Verbreken" Margin="0,0,8,0" Click="Disconnect_Click"/>
+                            <Button Style="{StaticResource SecondaryButton}" Tag="&#xE9D9;" Content="Verbinding testen" Click="Test_Click"
+                                    ToolTip="Cloud: stuurt een ping en wacht op antwoord. Local: controleert de open verbinding."/>
+                        </StackPanel>
+                        <TextBlock x:Name="TestResult" Style="{StaticResource Muted}" Margin="0,10,0,0" Visibility="Collapsed"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Modus -->
+                <Border Style="{StaticResource Card}" Margin="0,20,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Verbindingsmodus" Style="{StaticResource H2}"/>
+                        <Border Style="{StaticResource SegmentHost}" Margin="0,14,0,14">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Style="{StaticResource Segment}" Content="Local Mode" GroupName="BtMode"
+                                             IsChecked="{Binding Settings.BetterTok.Mode, Converter={StaticResource EnumEquals}, ConverterParameter=Local}" Checked="Mode_Checked"/>
+                                <RadioButton Style="{StaticResource Segment}" Content="Cloud Mode" GroupName="BtMode"
+                                             IsChecked="{Binding Settings.BetterTok.Mode, Converter={StaticResource EnumEquals}, ConverterParameter=Cloud}" Checked="Mode_Checked"/>
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel x:Name="LocalPanel">
+                            <TextBlock Style="{StaticResource Caption}" Margin="0,0,0,14"
+                                       Text="Gratis. De BetterTok-desktopapp draait op deze pc en stuurt events via ws://127.0.0.1. Geen API-key nodig."/>
+                            <TextBlock Text="WebSocket-adres" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Style="{StaticResource MonoBox}" Text="{Binding Settings.BetterTok.LocalUrl, UpdateSourceTrigger=LostFocus}" ui:Hint.Text="ws://127.0.0.1:21213"/>
+                            <CheckBox Style="{StaticResource Switch}" Content="Ook poort 21213–21222 proberen" IsChecked="{Binding Settings.BetterTok.ScanPorts}" Margin="0,12,0,0"
+                                      ToolTip="BetterTok kiest een hogere poort als 21213 bezet is. Aan laten staan."/>
+                        </StackPanel>
+
+                        <StackPanel x:Name="CloudPanel" Visibility="Collapsed">
+                            <TextBlock Style="{StaticResource Caption}" Margin="0,0,0,14"
+                                       Text="Via de BetterTok-server (wss://api.bettertok.app). Vereist een Creator-abonnement en een gekoppeld TikTok-account."/>
+                            <TextBlock Text="API-key" Style="{StaticResource FieldLabel}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <PasswordBox x:Name="KeyBox"/>
+                                <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="Opslaan" Margin="8,0,0,0" Click="SaveKey_Click"/>
+                            </Grid>
+                            <Grid Margin="0,8,0,0">
+                                <TextBlock x:Name="KeyStatus" Style="{StaticResource Caption}" VerticalAlignment="Center"/>
+                                <Button x:Name="RemoveKeyButton" Style="{StaticResource GhostButton}" Content="Key verwijderen" HorizontalAlignment="Right" MinHeight="26" Height="26" Click="RemoveKey_Click"/>
+                            </Grid>
+                            <TextBlock Style="{StaticResource Caption}" Margin="0,10,0,0"
+                                       Text="De key wordt versleuteld opgeslagen met Windows (DPAPI) en is alleen leesbaar voor jouw Windows-account. Deel nooit screenshots waarop je key staat."/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Gedrag -->
+                <Border Style="{StaticResource Card}" Margin="0,20,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Gedrag" Style="{StaticResource H2}" Margin="0,0,0,14"/>
+                        <CheckBox Style="{StaticResource Switch}" Content="Automatisch verbinden bij opstarten" IsChecked="{Binding Settings.BetterTok.AutoConnect}" Margin="0,0,0,12"/>
+                        <CheckBox Style="{StaticResource Switch}" Content="Automatisch opnieuw verbinden bij wegvallen" IsChecked="{Binding Settings.BetterTok.AutoReconnect}"
+                                  ToolTip="Probeert het na 1, 2, 4, 8, 15 en daarna elke 30 seconden opnieuw. Niet bij een geweigerde API-key."/>
+                    </StackPanel>
+                </Border>
+
+                <!-- DonateWave -->
+                <Border Style="{StaticResource Card}" Margin="0,20,0,0">
+                    <StackPanel>
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse x:Name="DwDot" Width="10" Height="10" VerticalAlignment="Center"/>
+                                <TextBlock Text="DonateWave" Style="{StaticResource H2}" Margin="12,0,0,0"/>
+                            </StackPanel>
+                            <CheckBox x:Name="DwSwitch" Style="{StaticResource Switch}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                      IsChecked="{Binding Settings.DonateWave.Enabled}" Click="DwSwitch_Click" ToolTip="Tips van DonateWave ophalen en een lichtshow afspelen"/>
+                        </Grid>
+                        <TextBlock x:Name="DwStatus" Style="{StaticResource Caption}" Margin="22,6,0,0" TextWrapping="Wrap"/>
+                        <TextBlock Style="{StaticResource Caption}" Margin="0,12,0,14" TextWrapping="Wrap"
+                                   Text="Elke tip op DonateWave speelt een lichtshow, naast je TikTok-gifts. Maak in DonateWave › Dashboard › Koppelingen een koppeling en plak de sleutel (dw_evt_…) hieronder. Welke show bij welk bedrag hoort stel je in bij Regels (type ‘DonateWave-tip’)."/>
+                        <TextBlock Text="Sleutel" Style="{StaticResource FieldLabel}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <PasswordBox x:Name="DwKeyBox"/>
+                            <Button Grid.Column="1" Style="{StaticResource PrimaryButton}" Content="Opslaan en verbinden" Margin="8,0,0,0" Click="DwSave_Click"/>
+                        </Grid>
+                        <Grid Margin="0,8,0,0">
+                            <TextBlock x:Name="DwKeyStatus" Style="{StaticResource Caption}" VerticalAlignment="Center"/>
+                            <Button x:Name="DwRemoveButton" Style="{StaticResource GhostButton}" Content="Sleutel verwijderen" HorizontalAlignment="Right" MinHeight="26" Height="26" Click="DwRemove_Click"/>
+                        </Grid>
+                        <TextBlock Text="Correctie: licht later (+) of eerder (−) (ms)" Style="{StaticResource FieldLabel}" Margin="0,14,0,0"
+                                   ToolTip="0 = precies volgens de metingen op je eigen overlay. Loopt het licht vóór op de sound: hoger. Loopt het achter: lager (mag negatief)."/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="70"/>
+                            </Grid.ColumnDefinitions>
+                            <Slider Minimum="-2000" Maximum="5000" SmallChange="50" LargeChange="250" TickFrequency="50" IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.DonateWave.OverlayDelayMs}" VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource NumberBox}" Text="{Binding Settings.DonateWave.OverlayDelayMs}" Margin="8,0,0,0"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource Caption}" Margin="0,4,0,0" TextWrapping="Wrap"
+                                   Text="Standaard 0. De app rekent alles zelf uit zoals gemeten op je overlay: gewone tip = sound direct; shout-out = 0,79 s + animatie + 0,80 s; daarna voorleesstem. Licht vóór → hoger, achter → lager."/>
+                        <Grid Margin="0,12,0,0">
+                            <TextBlock Text="Na de sound: voorleesstem tot de alert klaar is (ms)" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"
+                                       ToolTip="Gemeten: 3240 ms (naam + bedrag voorlezen). Pas daarna begint de volgende alert/show. Begint de volgende show te vroeg: hoger; te laat: lager."/>
+                            <TextBox Style="{StaticResource NumberBox}" HorizontalAlignment="Right" Text="{Binding Settings.DonateWave.AlertGapMs}"/>
+                        </Grid>
+                        <Grid Margin="0,10,0,0">
+                            <TextBlock Text="Bij 2+ shout-outs tegelijk: einde animatie → volgende animatie (ms)" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"
+                                       ToolTip="Gemeten: 1735 ms. Telt alleen als er een shout-out binnenkomt terwijl een animatie loopt; bij één shout-out verandert er niets."/>
+                            <TextBox Style="{StaticResource NumberBox}" HorizontalAlignment="Right" Text="{Binding Settings.DonateWave.BetweenAnimationsMs}"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource Caption}" Margin="0,4,0,0" TextWrapping="Wrap"
+                                   Text="Volgorde van DonateWave bij meerdere shout-outs tegelijk: animatie 1, dan animatie 2 + sound 2, animatie 3 + sound 3, … en als laatste sound 1. De app volgt die volgorde."/>
+                        <!-- Per shout-out afstellen -->
+                        <TextBlock Text="SHOUT-OUTS AFSTELLEN" Style="{StaticResource Overline}" Margin="0,18,0,4"/>
+                        <TextBlock Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="Na hoeveel seconden (vanaf de start van de animatie) de extra sound begint. Gemeten uit de animatievideo's; loopt het licht bij één special vóór, klik dan op + (later), loopt het achter op − (eerder)."/>
+                        <ItemsControl x:Name="ShoutoutList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="64"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="12" ToolTip="{Binding Name}"/>
+                                        <Button Grid.Column="1" Style="{StaticResource SmallButton}" Content="−" Width="30" Margin="6,0,4,0" Tag="{Binding}" Click="DelayMinus_Click" ToolTip="0,1 s eerder"/>
+                                        <TextBox Grid.Column="2" Text="{Binding StartDelaySeconds, UpdateSourceTrigger=LostFocus}" HorizontalContentAlignment="Center" ToolTip="Seconden"/>
+                                        <Button Grid.Column="3" Style="{StaticResource SmallButton}" Content="+" Width="30" Margin="4,0,0,0" Tag="{Binding}" Click="DelayPlus_Click" ToolTip="0,1 s later"/>
+                                        <TextBlock Grid.Column="4" Text="s" VerticalAlignment="Center" Margin="6,0,0,0" Style="{StaticResource Caption}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Style="{StaticResource GhostButton}" Content="Gemeten tijden terugzetten" HorizontalAlignment="Left" Margin="0,4,0,0" Click="DelayReset_Click"/>
+                        <!-- Waarom lukt het niet? -->
+                        <Border x:Name="DwProblemBox" Background="{StaticResource DangerSoftBrush}" CornerRadius="10" Padding="14,12" Margin="0,14,0,0" Visibility="Collapsed">
+                            <StackPanel>
+                                <TextBlock x:Name="DwProblemTitle" FontWeight="SemiBold" Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="DwProblemText" Style="{StaticResource Muted}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="DwProblemSolution" Style="{StaticResource Muted}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Style="{StaticResource Caption}" Margin="0,12,0,0" TextWrapping="Wrap"
+                                   Text="Testen: klik in DonateWave › Koppelingen op ‘Test’ (of stuur bij Livebediening een testtip). Je ziet de tip dan bij Geschiedenis en de lamp speelt de show. De sleutel wordt versleuteld opgeslagen (Windows DPAPI). Sleutels verlopen na 90 dagen."/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Live events -->
+        <Border Grid.Column="2" Style="{StaticResource Card}" Padding="0">
+            <DockPanel>
+                <Grid DockPanel.Dock="Top" Margin="20,18,20,12">
+                    <StackPanel>
+                        <TextBlock Text="Ontvangen berichten" Style="{StaticResource H2}"/>
+                        <TextBlock Text="Ruwe berichten zoals BetterTok ze stuurt (laatste 200). Handig om te controleren welke velden er binnenkomen."
+                                   Style="{StaticResource Caption}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                        <CheckBox Content="Pauzeren" IsChecked="{Binding RawPaused}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <Button Style="{StaticResource SmallButton}" Tag="&#xE8C8;" Content="Kopiëren" Margin="0,0,6,0" Click="CopyRaw_Click"/>
+                        <Button Style="{StaticResource SmallButton}" Content="Wissen" Click="ClearRaw_Click"/>
+                    </StackPanel>
+                </Grid>
+                <Grid>
+                    <TextBlock Text="Nog geen berichten ontvangen. Verbind met BetterTok en ga live (of stuur een testevent vanuit BetterTok)."
+                               Style="{StaticResource Caption}" Margin="20,8" Visibility="{Binding RawLog.Count, Converter={StaticResource CountToVis}, ConverterParameter=zero}"/>
+                    <ListBox x:Name="RawList" ItemsSource="{Binding RawLog}" ItemContainerStyle="{StaticResource RowItem}" Padding="8,0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" TextWrapping="Wrap" Foreground="{StaticResource Text2Brush}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

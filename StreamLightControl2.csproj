@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>StreamLightControl2</RootNamespace>
+    <AssemblyName>StreamLightControl</AssemblyName>
+    <Version>3.26.0</Version>
+    <Product>Stream Light Control</Product>
+    <AssemblyTitle>Stream Light Control</AssemblyTitle>
+    <SatelliteResourceLanguages>nl</SatelliteResourceLanguages>
+    <!-- Lokale P/Invoke (DPAPI, donkere titelbalk) is alleen voor Windows bedoeld -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!-- .exe met alles erbij (map), .NET hoeft niet apart geïnstalleerd te zijn (zie MaakExe.bat).
+       Geen single-file bundel: die stap crasht in de .NET 11 SDK (GenerateBundle / MSB4018). -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    <DebugType>embedded</DebugType>   <!-- regelnummers in foutmeldingen -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+  <!-- De testrunner is een apart project en hoort niet in de app -->
+  <ItemGroup>
+    <Compile Remove="Tests\**" />
+    <Page Remove="Tests\**" />
+    <None Remove="Tests\**" />
+    <Compile Remove="bin\**;obj\**" />
+  </ItemGroup>
+</Project>

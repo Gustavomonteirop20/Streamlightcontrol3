@@ -1,0 +1,110 @@
+<UserControl x:Class="StreamLightControl2.Views.StreamModeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Background="{StaticResource BgBrush}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="18">
+                <!-- Kop -->
+                <Grid Margin="0,0,0,16">
+                    <Border CornerRadius="15" Padding="12,6" BorderThickness="1" BorderBrush="{StaticResource LineBrush}" Background="{StaticResource CardBrush}" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="LiveDot" Width="9" Height="9" Fill="{Binding LiveBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding LiveText}" Margin="8,0,0,0" FontWeight="SemiBold" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                    <Button Style="{StaticResource GhostButton}" Tag="&#xE740;" Content="Volledig" HorizontalAlignment="Right" Click="Exit_Click"
+                            ToolTip="Terug naar de volledige weergave"/>
+                </Grid>
+
+                <!-- Verbindingen -->
+                <Border Style="{StaticResource Panel}" Margin="0,0,0,14">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="8" Height="8" Fill="{Binding BetterTokBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="BetterTok" Margin="10,0,0,0" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding BetterTokShort}" Margin="8,0,0,0" Style="{StaticResource Caption}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Ellipse Width="8" Height="8" Fill="{Binding GoveeBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="Govee" Margin="10,0,0,0" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding GoveeText}" Margin="8,0,0,0" Style="{StaticResource Caption}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Nu -->
+                <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,14">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="48" Height="48" CornerRadius="10" Background="{Binding FrameBrush}" BorderBrush="{StaticResource LineStrongBrush}" BorderThickness="1"/>
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Current.ShowName, TargetNullValue='Niets aan het afspelen', FallbackValue='Niets aan het afspelen'}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Style="{StaticResource Caption}"><Run Text="Wachtrij: "/><Run Text="{Binding QueueCount, Mode=OneWay}"/></TextBlock>
+                            </StackPanel>
+                        </Grid>
+                        <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}" Maximum="100" Margin="0,12,0,0"/>
+                        <UniformGrid Columns="2" Margin="0,12,0,0">
+                            <Button Style="{StaticResource SecondaryButton}" Tag="&#xE72A;" Content="Overslaan" Margin="0,0,4,0" Click="Skip_Click"/>
+                            <Button Style="{StaticResource SecondaryButton}" Tag="&#xE71A;" Content="Stop alles" Margin="4,0,0,0" CommandParameter="stop" Click="Quick_Click"/>
+                        </UniformGrid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Grote knoppen -->
+                <Button x:Name="StartStopButton" MinHeight="48" FontSize="14" Margin="0,0,0,8" Click="StartStop_Click"/>
+                <Button x:Name="SafeButton" MinHeight="44" Margin="0,0,0,16" Click="Safe_Click"/>
+
+                <TextBlock Text="SNELLE ACTIES" Style="{StaticResource Overline}" Margin="0,0,0,8"/>
+                <UniformGrid Columns="4">
+                    <Button Style="{StaticResource QuickButton}" CommandParameter="on" Click="Quick_Click" Margin="0,0,6,6" MinHeight="56">
+                        <StackPanel><TextBlock Text="&#xE7E8;" Style="{StaticResource Icon}" Foreground="{StaticResource SuccessBrush}"/><TextBlock Text="Aan" Margin="0,4,0,0" HorizontalAlignment="Center"/></StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource QuickButton}" CommandParameter="off" Click="Quick_Click" Margin="0,0,6,6" MinHeight="56">
+                        <StackPanel><TextBlock Text="&#xE7E8;" Style="{StaticResource Icon}"/><TextBlock Text="Uit" Margin="0,4,0,0" HorizontalAlignment="Center"/></StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource QuickButton}" CommandParameter="rainbow" Click="Quick_Click" Margin="0,0,6,6" MinHeight="56">
+                        <StackPanel><Border Width="18" Height="18" CornerRadius="9"><Border.Background><LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#FF1A1A" Offset="0"/><GradientStop Color="#FFE600" Offset="0.35"/><GradientStop Color="#1AFF4A" Offset="0.6"/><GradientStop Color="#7B6CF6" Offset="1"/></LinearGradientBrush></Border.Background></Border><TextBlock Text="Rainbow" Margin="0,4,0,0" HorizontalAlignment="Center"/></StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource QuickButton}" CommandParameter="white" Click="Quick_Click" Margin="0,0,0,6" MinHeight="56">
+                        <StackPanel><Border Width="18" Height="18" CornerRadius="9" Background="#FFFFFF"/><TextBlock Text="Wit" Margin="0,4,0,0" HorizontalAlignment="Center"/></StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource QuickButton}" CommandParameter="red" Click="Quick_Click" Margin="0,0,6,6" MinHeight="56">
+                        <StackPanel><Border Width="18" Height="18" CornerRadius="9" Background="#FF1A1A"/><TextBlock Text="Rood" Margin="0,4,0,0" HorizontalAlignment="Center"/></StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource QuickButton}" CommandParameter="green" Click="Quick_Click" Margin="0,0,6,6" MinHeight="56">
+                        <StackPanel><Border Width="18" Height="18" CornerRadius="9" Background="#1AFF4A"/><TextBlock Text="Groen" Margin="0,4,0,0" HorizontalAlignment="Center"/></StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource QuickButton}" CommandParameter="blue" Click="Quick_Click" Margin="0,0,6,6" MinHeight="56">
+                        <StackPanel><Border Width="18" Height="18" CornerRadius="9" Background="#1A4DFF"/><TextBlock Text="Blauw" Margin="0,4,0,0" HorizontalAlignment="Center"/></StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource QuickButton}" CommandParameter="stop" Click="Quick_Click" Margin="0,0,0,6" MinHeight="56">
+                        <StackPanel><TextBlock Text="&#xE71A;" Style="{StaticResource Icon}" Foreground="{StaticResource DangerBrush}"/><TextBlock Text="Stop" Margin="0,4,0,0" HorizontalAlignment="Center"/></StackPanel>
+                    </Button>
+                </UniformGrid>
+
+                <!-- Laatste events -->
+                <TextBlock Text="LAATSTE EVENTS" Style="{StaticResource Overline}" Margin="0,16,0,8"/>
+                <ItemsControl ItemsSource="{Binding Recent}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding Type, Converter={StaticResource EventIcon}}" Style="{StaticResource Icon}" FontSize="12" Margin="0,0,10,0"/>
+                                <TextBlock Grid.Column="1" TextTrimming="CharacterEllipsis"><Run Text="{Binding User, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  "/><Run Text="{Binding TypeLabel, Mode=OneWay}" Foreground="{StaticResource Text3Brush}"/></TextBlock>
+                                <TextBlock Grid.Column="2" Text="{Binding StatusLabel}" FontSize="11" Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

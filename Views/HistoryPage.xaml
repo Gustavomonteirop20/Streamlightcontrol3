@@ -1,0 +1,98 @@
+<UserControl x:Class="StreamLightControl2.Views.HistoryPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:StreamLightControl2.Controls">
+    <Border Style="{StaticResource Card}" Margin="24,22,24,24" Padding="0">
+        <DockPanel>
+            <Grid DockPanel.Dock="Top" Margin="20,18,20,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="260"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="SearchBox" ui:Hint.Text="Zoek op gebruiker, gift of lichtshow…" TextChanged="Search_TextChanged"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="14,0,0,0" VerticalAlignment="Center">
+                    <RadioButton Style="{StaticResource Chip}" Content="Alles" GroupName="HFilter" Tag="" IsChecked="True" Checked="Filter_Checked"/>
+                    <RadioButton Style="{StaticResource Chip}" Content="Follows" GroupName="HFilter" Tag="follow" Checked="Filter_Checked"/>
+                    <RadioButton Style="{StaticResource Chip}" Content="Gifts" GroupName="HFilter" Tag="gift" Checked="Filter_Checked"/>
+                    <RadioButton Style="{StaticResource Chip}" Content="Likes" GroupName="HFilter" Tag="like" Checked="Filter_Checked"/>
+                    <RadioButton Style="{StaticResource Chip}" Content="Shares" GroupName="HFilter" Tag="share" Checked="Filter_Checked"/>
+                    <RadioButton Style="{StaticResource Chip}" Content="Comments" GroupName="HFilter" Tag="comment" Checked="Filter_Checked"/>
+                    <RadioButton Style="{StaticResource Chip}" Content="Fouten" GroupName="HFilter" Tag="errors" Checked="Filter_Checked"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <CheckBox x:Name="HideTests" Content="Tests verbergen" VerticalAlignment="Center" Margin="0,0,14,0" Checked="HideTests_Changed" Unchecked="HideTests_Changed"/>
+                    <Button Style="{StaticResource SecondaryButton}" Tag="&#xEDE1;" Content="Exporteren" Margin="0,0,8,0" Click="Export_Click" ToolTip="Opslaan als CSV (te openen in Excel)"/>
+                    <Button Style="{StaticResource DangerButton}" Tag="&#xE74D;" Content="Wissen" Click="Clear_Click"/>
+                </StackPanel>
+            </Grid>
+
+            <Border DockPanel.Dock="Top" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,1" Background="{StaticResource InputBrush}" Padding="32,8,32,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="1.2*"/>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="1.2*"/>
+                        <ColumnDefinition Width="130"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="TIJDSTIP" Style="{StaticResource Overline}"/>
+                    <TextBlock Grid.Column="1" Text="GEBRUIKER" Style="{StaticResource Overline}"/>
+                    <TextBlock Grid.Column="2" Text="EVENT" Style="{StaticResource Overline}"/>
+                    <TextBlock Grid.Column="3" Text="GIFT" Style="{StaticResource Overline}"/>
+                    <TextBlock Grid.Column="4" Text="COINS" Style="{StaticResource Overline}"/>
+                    <TextBlock Grid.Column="5" Text="LICHTSHOW" Style="{StaticResource Overline}"/>
+                    <TextBlock Grid.Column="6" Text="STATUS" Style="{StaticResource Overline}"/>
+                </Grid>
+            </Border>
+
+            <TextBlock x:Name="CountText" DockPanel.Dock="Bottom" Style="{StaticResource Caption}" Margin="24,10,24,14"/>
+
+            <Grid>
+                <TextBlock x:Name="EmptyText" Text="Geen events gevonden." Style="{StaticResource Caption}" Margin="32,20" Visibility="Collapsed"/>
+                <ListBox x:Name="List" ItemContainerStyle="{StaticResource RowItem}" Padding="8,0"
+                         VirtualizingPanel.ScrollUnit="Pixel">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ToolTip="{Binding Detail}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="1.2*"/>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="90"/>
+                                    <ColumnDefinition Width="1.2*"/>
+                                    <ColumnDefinition Width="130"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Time, StringFormat=HH:mm:ss}"/>
+                                    <TextBlock Text="{Binding Time, StringFormat=d MMM}" Style="{StaticResource Caption}"/>
+                                </StackPanel>
+                                <TextBlock Grid.Column="1" Text="{Binding User}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,10,0"/>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Type, Converter={StaticResource EventIcon}}" Style="{StaticResource Icon}" FontSize="13" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding TypeLabel}"/>
+                                </StackPanel>
+                                <TextBlock Grid.Column="3" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,10,0">
+                                    <Run Text="{Binding GiftName, Mode=OneWay}"/>
+                                </TextBlock>
+                                <TextBlock Grid.Column="4" Text="{Binding Coins, StringFormat=N0}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="5" Text="{Binding ShowName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,10,0"/>
+                                <StackPanel Grid.Column="6" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Style="{StaticResource Pill}" Background="{Binding Status, Converter={StaticResource StatusToSoftBrush}}">
+                                        <TextBlock Text="{Binding StatusLabel}" FontSize="11" Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"/>
+                                    </Border>
+                                    <Border Style="{StaticResource Pill}" Margin="6,0,0,0" Visibility="{Binding IsTest, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="Test" FontSize="11" Foreground="{StaticResource Text3Brush}"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </DockPanel>
+    </Border>
+</UserControl>

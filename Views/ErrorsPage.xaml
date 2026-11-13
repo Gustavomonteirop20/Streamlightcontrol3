@@ -1,0 +1,91 @@
+<UserControl x:Class="StreamLightControl2.Views.ErrorsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel Margin="24,22,24,24">
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+            <TextBlock Style="{StaticResource Muted}" VerticalAlignment="Center"
+                       Text="Alles wat misgaat met BetterTok, Govee, events of de wachtrij, met een uitleg in gewone taal en wat je kunt doen. Opgeloste problemen verdwijnen vanzelf."/>
+            <Button Style="{StaticResource SecondaryButton}" Tag="&#xE74D;" Content="Alles wissen" HorizontalAlignment="Right" Click="ClearAll_Click"/>
+        </Grid>
+        <!-- Verbindingsdetails: API-adressen, HTTP-statussen, foutcodes -->
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource Card}" Margin="0,16,0,0">
+            <DockPanel>
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Verbindingsdetails" Style="{StaticResource H3}"/>
+                        <TextBlock Text="API-adres, HTTP-status, foutcodes en tijden van DonateWave, BetterTok en je lampen. Ververst elke seconde. Sleutels staan er nooit volledig in."
+                                   Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,4,220,0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                        <Button Style="{StaticResource SmallButton}" Content="DonateWave opnieuw proberen" Margin="0,0,6,0" Click="RetryDonateWave_Click"/>
+                        <Button Style="{StaticResource SmallButton}" Tag="&#xE8C8;" Content="Kopiëren" Click="CopyReport_Click"
+                                ToolTip="Kopieer de details om ze door te sturen (bijv. naar DonateWave-support of in de chat)."/>
+                    </StackPanel>
+                </Grid>
+                <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <TextBlock x:Name="ReportText" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Foreground="{StaticResource Text2Brush}"/>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+        <Grid>
+            <Border Style="{StaticResource Card}" VerticalAlignment="Top" Visibility="{Binding ErrorCount, Converter={StaticResource CountToVis}, ConverterParameter=zero}">
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="42" Height="42" CornerRadius="21" Background="{StaticResource SuccessSoftBrush}">
+                        <TextBlock Text="&#xE73E;" Style="{StaticResource Icon}" Foreground="{StaticResource SuccessBrush}"/>
+                    </Border>
+                    <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="Geen problemen" Style="{StaticResource H3}"/>
+                        <TextBlock Text="Alles werkt zoals het hoort." Style="{StaticResource Caption}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Errors}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border x:Name="IconBg" Width="40" Height="40" CornerRadius="20" Background="{StaticResource DangerSoftBrush}" VerticalAlignment="Top">
+                                        <TextBlock x:Name="Ico" Text="&#xEA39;" Style="{StaticResource Icon}" Foreground="{StaticResource DangerBrush}"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="16,0,16,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Title}" Style="{StaticResource H3}"/>
+                                            <Border Style="{StaticResource Pill}" Margin="10,0,0,0" Padding="7,1">
+                                                <TextBlock Text="{Binding CategoryLabel}" FontSize="11" Foreground="{StaticResource Text2Brush}"/>
+                                            </Border>
+                                            <TextBlock Style="{StaticResource Caption}" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                <Run Text="{Binding Count, Mode=OneWay}"/><Run Text="× · laatst "/><Run Text="{Binding LastSeen, StringFormat=HH:mm:ss, Mode=OneWay}"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Explanation}" Style="{StaticResource Muted}" Margin="0,8,0,0"/>
+                                        <TextBlock Text="Wat kun je doen?" FontWeight="SemiBold" Margin="0,12,0,4"/>
+                                        <TextBlock Text="{Binding Solution}" Style="{StaticResource Muted}"/>
+                                        <TextBox Text="{Binding Detail, Mode=OneWay}" IsReadOnly="True" Style="{StaticResource MonoBox}" Margin="0,12,0,0" TextWrapping="Wrap" MinHeight="30"
+                                                 Visibility="{Binding Detail, Converter={StaticResource NullToVis}}" Foreground="{StaticResource Text2Brush}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <Button Style="{StaticResource SmallButton}" Content="Ga naar instelling" CommandParameter="{Binding}" Click="Go_Click" Margin="0,0,0,6"/>
+                                        <Button Style="{StaticResource GhostButton}" Content="Negeren" CommandParameter="{Binding}" Click="Dismiss_Click" MinHeight="30" Height="30"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsWarning}" Value="True">
+                                    <Setter TargetName="IconBg" Property="Background" Value="{StaticResource WarningSoftBrush}"/>
+                                    <Setter TargetName="Ico" Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                    <Setter TargetName="Ico" Property="Text" Value="&#xE7BA;"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </DockPanel>
+</UserControl>

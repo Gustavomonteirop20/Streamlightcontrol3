@@ -1,0 +1,123 @@
+<UserControl x:Class="StreamLightControl2.Views.FollowManagerPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:StreamLightControl2">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="24,22,24,28">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="400"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <!-- Follow-effect -->
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <StackPanel x:Name="NoTrigger" Visibility="Collapsed">
+                            <TextBlock Text="Nog geen follow-effect" Style="{StaticResource H2}"/>
+                            <TextBlock Text="Maak een koppeling zodat je lampen reageren als iemand je volgt." Style="{StaticResource Muted}" Margin="0,6,0,16"/>
+                            <Button Style="{StaticResource PrimaryButton}" Tag="&#xE710;" Content="Follow-effect maken" HorizontalAlignment="Left" Click="Create_Click"/>
+                        </StackPanel>
+                        <StackPanel x:Name="TriggerPanel">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="Effect bij een nieuwe follower" Style="{StaticResource H2}"/>
+                                    <TextBlock Text="Deze lichtshow speelt af zodra iemand je volgt tijdens je LIVE." Style="{StaticResource Caption}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <CheckBox Style="{StaticResource Switch}" Content="Actief" IsChecked="{Binding Enabled}" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                            </Grid>
+                            <Grid Margin="0,20,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="160"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Lichtshow" Style="{StaticResource FieldLabel}"/>
+                                    <ComboBox x:Name="ShowCombo" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding ShowId}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Prioriteit" Style="{StaticResource FieldLabel}"/>
+                                    <ComboBox ItemsSource="{x:Static local:Options.PriorityList}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Priority}"/>
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                                <Button Style="{StaticResource PrimaryButton}" Tag="&#xE768;" Content="Test op mijn lampen" Margin="0,0,8,0" Click="Test_Click"/>
+                                <Button Style="{StaticResource SecondaryButton}" Tag="&#xE8FA;" Content="Simuleer een follow" Margin="0,0,8,0" Click="Simulate_Click"
+                                        ToolTip="Stuurt een nep-follow door de echte verwerking (regels, wachtrij, lampen)"/>
+                                <Button Style="{StaticResource GhostButton}" Tag="&#xE790;" Content="Show bewerken" Click="EditShow_Click"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Opties -->
+                <Border Style="{StaticResource Card}" Margin="0,20,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Slim omgaan met veel follows" Style="{StaticResource H2}"/>
+                        <TextBlock Text="Zo blijft je wachtrij rustig, ook als er veel mensen tegelijk volgen." Style="{StaticResource Caption}" Margin="0,4,0,18"/>
+
+                        <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Settings.Follow.OncePerUser}" Margin="0,0,0,4">
+                            <TextBlock Text="Elke kijker maar één keer per sessie"/>
+                        </CheckBox>
+                        <TextBlock Text="Voorkomt dat iemand met ontvolgen en opnieuw volgen steeds een effect triggert." Style="{StaticResource Caption}" Margin="48,0,0,18"/>
+
+                        <Grid>
+                            <TextBlock Text="Follows bundelen binnen" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
+                            <TextBlock HorizontalAlignment="Right" Style="{StaticResource Caption}" VerticalAlignment="Center">
+                                <Run Text="{Binding Settings.Follow.GroupWindowSeconds, Mode=OneWay}"/><Run Text=" s"/>
+                            </TextBlock>
+                        </Grid>
+                        <Slider Minimum="0" Maximum="30" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Settings.Follow.GroupWindowSeconds}" Margin="0,4,0,0"/>
+                        <TextBlock Text="Komen er binnen deze tijd meer follows, dan speelt er één effect. 0 = elke follow apart." Style="{StaticResource Caption}" Margin="0,4,0,18"/>
+
+                        <StackPanel x:Name="TriggerOptions">
+                            <Grid Margin="0,0,0,12">
+                                <TextBlock Text="Maximaal follow-effecten in de wachtrij" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
+                                <TextBox Style="{StaticResource NumberBox}" Width="70" HorizontalAlignment="Right" Text="{Binding MaxInQueue}" ToolTip="0 = onbeperkt"/>
+                            </Grid>
+                            <Grid>
+                                <TextBlock Text="Cooldown na een follow-effect (seconden)" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
+                                <TextBox Style="{StaticResource NumberBox}" Width="70" HorizontalAlignment="Right" Text="{Binding CooldownSeconds}"/>
+                            </Grid>
+                        </StackPanel>
+                        <Button Style="{StaticResource GhostButton}" Tag="&#xE72C;" Content="Nieuwe sessie: follower-lijst wissen" HorizontalAlignment="Left" Margin="-8,16,0,0" Click="ResetSession_Click"
+                                ToolTip="Iedereen kan dan weer een follow-effect triggeren. Gebeurt ook automatisch als je de app herstart."/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Recente followers -->
+            <Border Grid.Column="2" Style="{StaticResource Card}">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Text="Recente followers" Style="{StaticResource H2}"/>
+                        <Border Style="{StaticResource Pill}" HorizontalAlignment="Right" Background="{StaticResource AccentSoftBrush}">
+                            <TextBlock FontSize="12" Foreground="{StaticResource AccentHoverBrush}"><Run Text="{Binding Stats.Follows, Mode=OneWay}"/><Run Text=" deze sessie"/></TextBlock>
+                        </Border>
+                    </Grid>
+                    <TextBlock x:Name="NoFollowers" Text="Nog geen follows ontvangen." Style="{StaticResource Caption}" Margin="0,14,0,0"/>
+                    <ItemsControl x:Name="FollowerList" Margin="0,12,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="60"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding User}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="1" Style="{StaticResource Pill}" Background="{Binding Status, Converter={StaticResource StatusToSoftBrush}}" ToolTip="{Binding Detail}">
+                                        <TextBlock Text="{Binding StatusLabel}" FontSize="11" Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="2" Text="{Binding Time, StringFormat=HH:mm}" Style="{StaticResource Caption}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

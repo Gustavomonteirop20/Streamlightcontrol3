@@ -1,0 +1,58 @@
+# Bouwt en publiceert een nieuwe versie zodra je een tag als v3.2.0 pusht.
+# Alle geïnstalleerde apps zien de nieuwe release en werken zichzelf bij.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versie (bijv. 3.2.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Versie bepalen
+        id: ver
+        shell: pwsh
+        run: |
+          $v = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ github.event.inputs.version }}' } else { '${{ github.ref_name }}'.TrimStart('v') }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Tests (kernlogica)
+        continue-on-error: true
+        shell: pwsh
+        run: dotnet run --project Tests/StreamLightControl2.Tests.csproj -c Release
+
+      - name: App bouwen
+        shell: pwsh
+        run: dotnet publish StreamLightControl2.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -p:Version=${{ steps.ver.outputs.version }} -o out
+
+      - name: Inpakken
+        shell: pwsh
+        run: |
+          $zip = "StreamLightControl-${{ steps.ver.outputs.version }}-win-x64.zip"
+          Compress-Archive -Path out\* -DestinationPath $zip
+          (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower() | Out-File -Encoding ascii -NoNewline "$zip.sha256"
+
+      - name: Release publiceren
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: Stream Light Control ${{ steps.ver.outputs.version }}
+          generate_release_notes: true
+          files: |
+            StreamLightControl-${{ steps.ver.outputs.version }}-win-x64.zip
+            StreamLightControl-${{ steps.ver.outputs.version }}-win-x64.zip.sha256
