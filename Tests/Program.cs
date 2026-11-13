@@ -1046,6 +1046,106 @@ Test("Verbindingsdetails: API-adres, HTTP-status en foutcode zichtbaar, sleutel 
     True(rep.Contains("BETTERTOK") && rep.Contains("GOVEE"), "ook BetterTok en lampen");
 });
 
+TestSync("Kerst-overlays: tips tellen voor doel, ranking, recent, vandaag en weekkampioen", () =>
+{
+    var dir = TempDir();
+    var stats = new DonationStats(dir);
+    var o = new OverlayOptions { GoalCents = 10000, GoalStartUtc = DateTime.UtcNow.AddHours(-1) };
+    var now = DateTime.UtcNow;
+    StreamEvent Tip(string id, string name, long cents, bool test = false, string kind = "", int q = 1, string msg = "", double minAgo = 0) => new()
+    {
+        Type = EventTypes.Tip, DedupeKey = "dw:" + id, User = name, TotalCoins = cents, IsTest = test, TipKind = kind, GiftCount = q,
+        TipMessage = msg, OccurredAtUtc = now.AddMinutes(-minAgo)
+    };
+    stats.Add(Tip("1", "Anna", 500, msg: "Fijne kerst!", minAgo: 3), now.AddMinutes(-3));
+    stats.Add(Tip("2", "Bram", 2000, kind: TipKinds.Shoutout, minAgo: 2), now.AddMinutes(-2));
+    stats.Add(Tip("3", "anna", 1000, minAgo: 1), now.AddMinutes(-1));
+    stats.Add(Tip("4", "TestViewer", 500, test: true), now);
+    True(stats.Add(Tip("1", "Anna", 500), now) == null, "dubbele tip telt niet");
+    var j = System.Text.Json.JsonSerializer.SerializeToElement(stats.Snapshot(o, now));
+    Eq("€ 35,00", j.GetProperty("goal").GetProperty("current").GetString(), "doel zonder testtips");
+    Eq(35.0, j.GetProperty("goal").GetProperty("percent").GetDouble());
+    Eq("€ 65,00", j.GetProperty("goal").GetProperty("remaining").GetString());
+    var rk = j.GetProperty("ranking");
+    Eq("Bram", rk[0].GetProperty("name").GetString()); Eq("€ 20,00", rk[0].GetProperty("amount").GetString());
+    Eq("anna", rk[1].GetProperty("name").GetString(), "Anna + anna samen"); Eq("€ 15,00", rk[1].GetProperty("amount").GetString());
+    Eq(3, j.GetProperty("recent").GetArrayLength(), "testtip niet in recent");
+    Eq("anna", j.GetProperty("recent")[0].GetProperty("name").GetString(), "nieuwste eerst");
+    Eq("Fijne kerst!", j.GetProperty("recent")[2].GetProperty("message").GetString());
+    Eq(3, j.GetProperty("today").GetProperty("count").GetInt32(), "vandaag zonder testtip");
+    Eq("Bram", j.GetProperty("weekChampion").GetProperty("name").GetString());
+    Eq(1, j.GetProperty("alerts").GetArrayLength(), "alleen de nieuwe alert (testtip ook), oude zijn al voorbij");
+    Eq("TestViewer", j.GetProperty("alerts")[0].GetProperty("name").GetString());
+    // 3 tips tegelijk: alerts na elkaar, nooit over elkaar
+    stats.Add(Tip("5", "Cor", 100), now); stats.Add(Tip("6", "Dirk", 200), now); stats.Add(Tip("7", "Eva", 300), now);
+    var al = System.Text.Json.JsonSerializer.SerializeToElement(stats.Snapshot(o, now)).GetProperty("alerts");
+    Eq(4, al.GetArrayLength());
+    for (var i = 1; i < al.GetArrayLength(); i++)
+        True(al[i].GetProperty("showAt").GetInt64() >= al[i - 1].GetProperty("showAt").GetInt64() + o.AlertMs, "alert na de vorige");
+    // Testtips meetellen
+    o.CountTests = true;
+    j = System.Text.Json.JsonSerializer.SerializeToElement(stats.Snapshot(o, now));
+    Eq("€ 46,00", j.GetProperty("goal").GetProperty("current").GetString(), "35 + 5 test + 6");
+    // Doel terugzetten
+    o.GoalStartUtc = now.AddSeconds(1);
+    j = System.Text.Json.JsonSerializer.SerializeToElement(stats.Snapshot(o, now));
+    Eq("€ 0,00", j.GetProperty("goal").GetProperty("current").GetString());
+    // Bewaard na herstart
+    var again = new DonationStats(dir);
+    Eq(7, again.Count, "tips bewaard in donations.json");
+    again.Clear(); Eq(0, new DonationStats(dir).Count, "wissen");
+});
+
+Test("Kerst-overlays: server op localhost geeft pagina's en de stand", async () =>
+{
+    var dir = TempDir();
+    var stats = new DonationStats(dir);
+    var o = new OverlayOptions { Port = 7590 };
+    using var server = new OverlayServer(stats, () => o);
+    server.Apply();
+    True(server.IsRunning, server.Status);
+    stats.Add(new StreamEvent { Type = EventTypes.Tip, DedupeKey = "dw:x", User = "<b>Hacker</b>", TotalCoins = 750, OccurredAtUtc = DateTime.UtcNow }, DateTime.UtcNow);
+    using var http = new HttpClient();
+    var state = await http.GetStringAsync("http://127.0.0.1:7590/api/state");
+    True(state.Contains("\\u003Cb\\u003EHacker") || state.Contains("\\u003cb\\u003eHacker"), "naam als JSON-tekst (geen HTML): " + state[..Math.Min(200, state.Length)]);
+    foreach (var v in OverlayServer.Views)
+    {
+        var html = await http.GetStringAsync($"http://127.0.0.1:7590/kerst/{v.Path}");
+        True(html.Contains($"data-view=\"{v.Path}\""), v.Path);
+        True(!html.Contains("__"), "geen lege plaatshouders in " + v.Path);
+    }
+    True((await http.GetStringAsync("http://127.0.0.1:7590/")).Contains("/kerst/alert"), "overzicht");
+    var nf = await http.GetAsync("http://127.0.0.1:7590/geheim");
+    Eq(System.Net.HttpStatusCode.NotFound, nf.StatusCode);
+    // Poort bezet → duidelijke melding, geen crash
+    using var second = new OverlayServer(stats, () => o);
+    second.Apply();
+    True(!second.IsRunning && second.Status.Contains("7590"), second.Status);
+    o.Enabled = false; server.Apply();
+    True(!server.IsRunning, "uit");
+});
+
+Test("Kerst-overlays: DonateWave-tip komt in de overlays, ook zonder lichtregel", async () =>
+{
+    var dir = TempDir();
+    using var app = new AutomationController(dir, NewGovee());
+    app.Initialize();
+    var t0 = DateTime.UtcNow;
+    app.HandleEvent(new StreamEvent { Type = EventTypes.Tip, RawType = "tip.received", DedupeKey = "dw:a1", User = "Kees", TotalCoins = 1500, OccurredAtUtc = t0 });
+    app.HandleEvent(new StreamEvent { Type = EventTypes.Tip, RawType = "tip.received", DedupeKey = "dw:a2", User = "Lies", TotalCoins = 500, TipKind = TipKinds.Shoutout, GiftCount = 1, CoinsPerItem = 500, OccurredAtUtc = t0 });
+    Eq(2, app.Donations.Count);
+    var j = System.Text.Json.JsonSerializer.SerializeToElement(app.Donations.Snapshot(app.Settings.Overlays, t0));
+    Eq("Lies", j.GetProperty("last").GetProperty("name").GetString());
+    var al = j.GetProperty("alerts");
+    var tip = al.EnumerateArray().First(a => a.GetProperty("name").GetString() == "Kees");
+    var so = al.EnumerateArray().First(a => a.GetProperty("name").GetString() == "Lies");
+    var ms0 = new DateTimeOffset(t0).ToUnixTimeMilliseconds();
+    True(Math.Abs(tip.GetProperty("showAt").GetInt64() - (ms0 - 140)) < 5, "gewone tip: tegelijk met DonateWave");
+    True(so.GetProperty("showAt").GetInt64() >= ms0 + 790 + 7500 + 795 - 5, "shout-out: na de animatie");
+    await Task.CompletedTask;
+    app.Queue.StopAll();
+});
+
 Test("Follow: 2 follows na elkaar – licht voor de tweede pas als de sound van de eerste klaar is", async () =>
 {
     var dir = TempDir();

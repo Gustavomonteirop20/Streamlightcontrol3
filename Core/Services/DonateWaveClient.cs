@@ -314,6 +314,7 @@ public sealed class DonateWaveClient : IDisposable
             IsTest = test,
             TipKind = wheel ? TipKinds.Wheel : special ? TipKinds.Shoutout : "",
             Comment = Clean(string.Join(" | ", extra.Where(x => x.Length > 0))),
+            TipMessage = Clean(data.ValueKind == JsonValueKind.Object ? Str(data, "message") : "", 200),
             OccurredAtUtc = createdUtc,
             FromCloud = true
         };

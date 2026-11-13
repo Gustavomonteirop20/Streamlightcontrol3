@@ -88,6 +88,7 @@ public sealed class SettingsStore : IDisposable
         s.Updates ??= new();
         s.Spotify ??= new();
         s.DonateWave ??= new();
+        s.Overlays ??= new();
         foreach (var d in s.Devices.Where(d => d == null).ToList()) s.Devices.Remove(d!);
         foreach (var t in s.Triggers.Where(t => t == null).ToList()) s.Triggers.Remove(t!);
         foreach (var show in s.Shows.Where(x => x == null).ToList()) s.Shows.Remove(show!);
@@ -424,7 +425,7 @@ public sealed class SettingsStore : IDisposable
 
     private void Watch(AppSettings s)
     {
-        foreach (var o in new INotifyPropertyChanged[] { s.BetterTok, s.Follow, s.Gift, s.Queue, s.Lighting, s.General, s.Updates, s.DonateWave })
+        foreach (var o in new INotifyPropertyChanged[] { s.BetterTok, s.Follow, s.Gift, s.Queue, s.Lighting, s.General, s.Updates, s.DonateWave, s.Overlays })
             o.PropertyChanged += (_, _) => RequestSave();
         WatchCollection(s.Devices);
         WatchCollection(s.Triggers);

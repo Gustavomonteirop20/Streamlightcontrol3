@@ -328,6 +328,21 @@ Sound en show lopen gelijk: de app rekent vanaf het moment van de tip (DonateWav
 Versie 3.18: de overlay laat een tip iets later zien dan het moment van de tip (ontvangen + animatie en
 geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later laten beginnen dan de tip" op de
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
+KERST-OVERLAYS (versie 3.27) – BetterTok › kaart "Kerst-overlays".
+De app biedt op deze pc eigen kerstversies van de DonateWave-onderdelen aan, live bijgewerkt met elke tip
+die via je DonateWave-sleutel binnenkomt:
+  http://localhost:7531/kerst/alert       Tipalert (600 × 420) – verschijnt tegelijk met die van DonateWave
+  http://localhost:7531/kerst/doel        Tipdoel als zuurstok (520 × 200)
+  http://localhost:7531/kerst/ranking     Lijst van de Kerstman, top 5 van de maand (420 × 480)
+  http://localhost:7531/kerst/recent      Onder de boom, laatste 5 tips (420 × 420)
+  http://localhost:7531/kerst/supporters  Laatste supporter, kerstkampioen van de week, vandaag (420 × 420)
+  http://localhost:7531/kerst/alles       Alles onder elkaar, past zich aan 432 × 768 aan
+Zet het adres als browserbron in OBS of als linkbron in TikTok LIVE Studio (op dezelfde pc).
+Extra's achter het adres: ?scale=1.3 (groter/kleiner), ?still=1 (zonder beweging), ?bg=1 (donkere achtergrond, voorbeeld).
+Zet hetzelfde onderdeel in DonateWave › Overlaybouwer uit, anders staat het er dubbel.
+Doel, testtips meetellen, alert-duur en poort stel je in op de kaart. Tips worden bewaard in donations.json.
+Let op: tips die binnenkwamen terwijl de app uit stond, ziet de app niet (de ranking telt vanaf nu).
+
 SOUND-DUUR PER REGEL (versie 3.25) – Regels › kies een regel › "Sound bij dit event duurt (seconden)".
 Speelt BetterTok bij een event een sound (bijv. bij een follow), vul dan hier in hoe lang die sound duurt.
 Volgen er 2 mensen vlak na elkaar, dan knipperen de lampen voor de tweede pas als de sound van de eerste

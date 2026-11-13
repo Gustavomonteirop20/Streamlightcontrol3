@@ -50,10 +50,38 @@ public sealed class AutomationController : IDisposable
         Queue = new AutomationQueue(Engine, () => _targets, () => Settings.Queue);
         BetterTok = new BetterTokClient(Errors);
         DonateWave = new DonateWaveClient(Errors, donateWaveHttp);
+        Donations = new DonationStats(Store.DataDirectory);
+        Overlays = new OverlayServer(Donations, () => Settings.Overlays, Errors.WriteLog);
         Spotify = new SpotifyLightController(Engine, () => _targets, () => Settings, () => Queue.Current != null || Calibrating, Errors, nowPlaying, audio);
     }
 
     public AppMode Mode => Settings.General.Mode;
+
+    /// <summary>Bijgehouden DonateWave-tips voor de kerst-overlays.</summary>
+    public DonationStats Donations { get; }
+    /// <summary>Lokale bron (127.0.0.1) voor de kerst-overlays in OBS / TikTok LIVE Studio.</summary>
+    public OverlayServer Overlays { get; }
+
+    /// <summary>Tipdoel opnieuw vanaf € 0 laten tellen.</summary>
+    public void ResetTipGoal()
+    {
+        Settings.Overlays.GoalStartUtc = DateTime.UtcNow;
+        Store.RequestSave();
+    }
+
+    /// <summary>Moment waarop de DonateWave-overlay de tip toont (voor de kerst-alert).</summary>
+    private DateTime TipAlertMoment(StreamEvent e, DateTime? soundStart)
+    {
+        if (soundStart is { } s) return s;
+        var occ = e.OccurredAtUtc ?? DateTime.UtcNow;
+        if (e.TipKind == TipKinds.Shoutout)
+        {
+            // Zonder eigen regel: gemeten tijden met de animatieduur van de special met dit bedrag (anders 7 s)
+            var anim = Settings.Triggers.FirstOrDefault(t => t.EventType == EventTypes.Tip && t.TipKind == TipKinds.Shoutout && t.StartDelayMs > 0 && t.CoinsMatch(e.CoinsPerItem))?.StartDelayMs ?? 7000;
+            return occ.AddMilliseconds(Settings.DonateWave.OverlayDelayMs + DwArriveToAnimMs + anim + DwAnimEndToSoundMs);
+        }
+        return occ.AddMilliseconds(Settings.DonateWave.OverlayDelayMs + DwArriveToSoundMs);
+    }
 
     /// <summary>Vertraging meten loopt: Spotify-licht en wachtrij blijven even van de lampen af.</summary>
     public bool Calibrating { get; private set; }
@@ -132,6 +160,7 @@ public sealed class AutomationController : IDisposable
     public async Task StartLastModeAsync()
     {
         ApplyDonateWave();   // tips komen los van BetterTok binnen (in Spotify-modus worden ze genegeerd)
+        Overlays.Apply();
         if (Mode == AppMode.Spotify) { Spotify.Start(); ModeChanged?.Invoke(); return; }
         if (Settings.General.StartAutomationOnLaunch) await StartAutomationAsync();
         else if (Settings.BetterTok.AutoConnect) await ConnectBetterTokAsync();
@@ -478,6 +507,7 @@ public sealed class AutomationController : IDisposable
                         e.IsTest ? QueueSource.Test : QueueSource.Event, d.Trigger.InterruptCurrent, entry,
                         startAt, maxWait, d.Trigger.SoundDurationMs);
                     attach?.Invoke(qi);
+                    if (e.Type == EventTypes.Tip) Donations.Add(e, TipAlertMoment(e, startAt));
                     EventHandled?.Invoke(entry);
                     return entry;
                 case DecisionKind.NoRule:
@@ -492,6 +522,7 @@ public sealed class AutomationController : IDisposable
                     break;
             }
         }
+        if (e.Type == EventTypes.Tip) Donations.Add(e, TipAlertMoment(e, null));
         // Losse likes zonder koppeling niet allemaal in de geschiedenis (kan honderden per minuut zijn)
         if (!(e.Type == EventTypes.Like && (entry.Status is ProcessingStatus.Ignored or ProcessingStatus.NoRule) && !e.IsTest))
             History.Add(entry);
@@ -700,6 +731,7 @@ public sealed class AutomationController : IDisposable
         Queue.Dispose();
         BetterTok.Dispose();
         DonateWave.Dispose();
+        Overlays.Dispose();
         Store.SaveNow();
         Store.Dispose();
         History.Dispose();

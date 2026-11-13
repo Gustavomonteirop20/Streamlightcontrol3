@@ -24,9 +24,64 @@ public partial class BetterTokPage : UserControl, IPageActivated
         RefreshShoutouts();
         S.Errors.CollectionChanged += (_, _) => Dispatcher.BeginInvoke(UpdateDonateWave);
         UpdateDonateWave();
+        UpdateOverlays();
     }
 
-    public void OnActivated() { UpdateStatus(); UpdateKeyStatus(); UpdateDonateWave(); RefreshShoutouts(); }
+    public void OnActivated() { UpdateStatus(); UpdateKeyStatus(); UpdateDonateWave(); RefreshShoutouts(); UpdateOverlays(); }
+
+    // ------------------------------------------------------------------ Kerst-overlays
+
+    private sealed record OverlayLink(string Name, string Url, string Size, string Preview);
+
+    private void UpdateOverlays()
+    {
+        var ov = C.Overlays;
+        OvDot.Fill = Ui.Res(!S.Settings.Overlays.Enabled ? "Text3Brush" : ov.IsRunning ? "SuccessBrush" : "DangerBrush");
+        OvStatus.Text = !S.Settings.Overlays.Enabled ? "Uit" : ov.IsRunning ? $"Aan · {C.Donations.Count} tips bijgehouden" : ov.Status;
+        var port = S.Settings.Overlays.Port;
+        OvLinks.ItemsSource = OverlayServer.Views.Select(v => new OverlayLink(v.Name, $"http://localhost:{port}/kerst/{v.Path}", v.Size,
+            $"http://localhost:{port}/kerst/{v.Path}?bg=1")).ToList();
+    }
+
+    private void OvSwitch_Click(object sender, RoutedEventArgs e) { C.Overlays.Apply(); UpdateOverlays(); }
+
+    private void OvPort_LostFocus(object sender, RoutedEventArgs e) => Dispatcher.BeginInvoke(() => { C.Overlays.Apply(); UpdateOverlays(); });
+
+    private void OvCopy_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is not string url) return;
+        try { Clipboard.SetText(url); Ui.Toast("Adres gekopieerd"); }
+        catch (Exception ex) { Ui.Toast("Kopiëren mislukt: " + ex.Message, ToastKind.Error); }
+    }
+
+    private static void Open(string url)
+    {
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true }); }
+        catch (Exception ex) { Ui.Toast("Openen mislukt: " + ex.Message, ToastKind.Error); }
+    }
+
+    private void OvOpen_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is string url) Open(url);
+    }
+
+    private void OvIndex_Click(object sender, RoutedEventArgs e) => Open($"http://localhost:{S.Settings.Overlays.Port}/");
+
+    private void OvResetGoal_Click(object sender, RoutedEventArgs e)
+    {
+        C.ResetTipGoal();
+        Ui.Toast("Het doel telt opnieuw vanaf € 0");
+    }
+
+    private void OvClear_Click(object sender, RoutedEventArgs e)
+    {
+        var r = MessageBox.Show(Window.GetWindow(this), "Alle bijgehouden tips wissen? Ranking, weekkampioen, vandaag, recente tips en het doel beginnen dan opnieuw. Dit kan niet ongedaan worden.",
+            "Tips wissen", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+        if (r != MessageBoxResult.Yes) return;
+        C.Donations.Clear();
+        UpdateOverlays();
+        Ui.Toast("Tips gewist");
+    }
 
     private void RefreshShoutouts() =>
         ShoutoutList.ItemsSource = S.Settings.Triggers.Where(t => t.EventType == EventTypes.Tip && t.TipKind == TipKinds.Shoutout && t.Id.StartsWith("tw-special-")).ToList();

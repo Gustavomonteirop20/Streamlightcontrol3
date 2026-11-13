@@ -241,6 +241,32 @@ public sealed class DonateWaveOptions : ObservableObject
     public int BetweenAnimationsMs { get => _betweenAnimationsMs; set => Set(ref _betweenAnimationsMs, Math.Clamp(value, 0, 10000)); }
 }
 
+/// <summary>Eigen kerst-overlays (lokale bron voor OBS / TikTok LIVE Studio) met live DonateWave-gegevens.</summary>
+public sealed class OverlayOptions : ObservableObject
+{
+    private bool _enabled = true;
+    public bool Enabled { get => _enabled; set => Set(ref _enabled, value); }
+    private int _port = 7531;
+    public int Port { get => _port; set => Set(ref _port, Math.Clamp(value, 1024, 65535)); }
+    private string _goalTitle = "Kerstdoel";
+    public string GoalTitle { get => _goalTitle; set => Set(ref _goalTitle, value ?? ""); }
+    private long _goalCents = 10000;
+    public long GoalCents { get => _goalCents; set { if (Set(ref _goalCents, Math.Clamp(value, 100, 100_000_000))) OnPropertyChanged(nameof(GoalEuro)); } }
+    [System.Text.Json.Serialization.JsonIgnore] public string GoalEuro
+    {
+        get => (GoalCents / 100m).ToString("0.##", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+        set { if (decimal.TryParse((value ?? "").Replace("€", "").Trim().Replace(".", "").Replace(",", "."), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var v)) GoalCents = (long)Math.Round(v * 100); OnPropertyChanged(); }
+    }
+    /// <summary>Vanaf dit moment telt het tipdoel (Doel terugzetten).</summary>
+    public DateTime GoalStartUtc { get; set; } = DateTime.MinValue;
+    private bool _countTests;
+    /// <summary>Testtips meetellen in doel, ranking en recente tips (handig om te testen).</summary>
+    public bool CountTests { get => _countTests; set => Set(ref _countTests, value); }
+    private int _alertMs = 7000;
+    /// <summary>Hoe lang de kerst-tipalert in beeld blijft.</summary>
+    public int AlertMs { get => _alertMs; set => Set(ref _alertMs, Math.Clamp(value, 2000, 60000)); }
+}
+
 public sealed class AppSettings
 {
     public int Version { get; set; } = 26;
@@ -257,6 +283,7 @@ public sealed class AppSettings
     public UpdateOptions Updates { get; set; } = new();
     public SpotifyOptions Spotify { get; set; } = new();
     public DonateWaveOptions DonateWave { get; set; } = new();
+    public OverlayOptions Overlays { get; set; } = new();
 
     // ---- Velden uit versie 2.0 (alleen gelezen voor migratie, daarna leeg) ----
     [JsonPropertyName("BetterTokUrl")] public string? LegacyBetterTokUrl { get; set; }

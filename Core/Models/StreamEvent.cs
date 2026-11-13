@@ -18,6 +18,8 @@ public sealed class StreamEvent
     public bool StreakInProgress { get; init; }
     public int LikeCount { get; init; }
     public string Comment { get; init; } = "";
+    /// <summary>Bericht van de supporter bij een DonateWave-tip (als de API het meestuurt).</summary>
+    public string TipMessage { get; init; } = "";
     /// <summary>DonateWave: "" = gewone tip, "shoutout" = shout-out (special), "wheel" = Lucky Wheel.</summary>
     public string TipKind { get; init; } = "";
     /// <summary>Moment van het event bij de bron (DonateWave created_at), in UTC. Null = onbekend (nu).</summary>
