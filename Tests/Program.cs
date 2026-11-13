@@ -140,7 +140,7 @@ TestSync("Opslag: versie 4 → 5 vervangt oude coin-bereiken door de BetterTok-r
     s.Triggers.Add(new EventTrigger { Name = "Mijn Rose", EventType = EventTypes.Gift, GiftNames = "Rose", ShowId = "preset-police" });
     SettingsStore.Migrate(s);
     SettingsStore.EnsureDefaults(s, false);
-    Eq(28, s.Version);
+    Eq(29, s.Version);
     True(s.Triggers.All(t => t.Name != "Gift 100–499 coins"), "oude standaard weg");
     Eq(14999, s.Triggers.Single(t => t.Id == "tf-10000").MaxCoins, "bestaande regel bijgewerkt");
     True(s.Triggers.Any(t => t.Name == "Mijn Rose"), "eigen regel blijft");
@@ -522,7 +522,7 @@ TestSync("Opslag: versie 9 → 10: Rave-varianten weg, koppelingen omgezet, 4 wi
     s.Shows.Add(new LightShow { Id = "preset-song-numb-rave", Name = "♪ Numb · Rave", PresetKey = "song-numb-rave" });
     s.Triggers.Add(new EventTrigger { Name = "eigen", EventType = EventTypes.Gift, GiftNames = "Rose", ShowId = "preset-song-numb-rave" });
     SettingsStore.Migrate(s);
-    Eq(28, s.Version);
+    Eq(29, s.Version);
     Eq(0, s.Shows.Count(x => x.PresetKey.EndsWith("-rave")), "Rave-shows weg");
     Eq("preset-song-numb", s.Triggers.Single(t => t.Name == "eigen").ShowId, "koppeling omgezet");
     Eq(550, s.Lighting.MinChangeMs, "versie 12 zet de limiet op 550 ms");
@@ -536,7 +536,7 @@ TestSync("Opslag: versie 11 → 12: limiet 550 ms, songs en presets vernieuwd, e
     var police = Presets.Create(Presets.Police); police.Steps[0].DurationMs = 320; s.Shows.Add(police);
     var song = Presets.Create("song-numb"); song.Steps.Add(LightStep.Color("#FF0000", 100, 100, 1, 0)); s.Shows.Add(song);
     SettingsStore.Migrate(s);
-    Eq(28, s.Version);
+    Eq(29, s.Version);
     Eq(550, s.Lighting.MinChangeMs);
     Eq(600, s.Shows.Single(x => x.PresetKey == Presets.Police).Steps[0].DurationMs, "Police vernieuwd");
     Eq(Presets.Create("song-numb").Steps.Count, s.Shows.Single(x => x.PresetKey == "song-numb").Steps.Count, "song vernieuwd");
@@ -554,7 +554,7 @@ TestSync("Opslag: versie 3 → 4 zet snelle flitsmodus aan en vernieuwt Police",
     s.Shows.Add(oldPolice);
     SettingsStore.Migrate(s);
     Eq(FlashMode.Black, s.Lighting.FlashMode);
-    Eq(28, s.Version);
+    Eq(29, s.Version);
     True(s.Shows.Single(x => x.PresetKey == Presets.Police).Steps.Count > 1, "Police vernieuwd");
 });
 
@@ -951,7 +951,7 @@ Test("DonateWave: 401 stopt met vragen, 429 wacht, netwerkfout probeert opnieuw 
 TestSync("Opslag: versie 23 → 24 zet naam/bedrag-tijd op 2 s, eigen waarde blijft", () =>
 {
     var s = DefaultSettings(); s.DonateWave.AlertGapMs = 300; s.Version = 23; SettingsStore.Migrate(s);
-    Eq(28, s.Version);
+    Eq(29, s.Version);
     Eq(3240, s.DonateWave.AlertGapMs, "via 2000 naar de gemeten 3240");
     var s2 = DefaultSettings(); s2.DonateWave.AlertGapMs = 1500; s2.Version = 23; SettingsStore.Migrate(s2);
     Eq(1500, s2.DonateWave.AlertGapMs, "zelf ingesteld blijft");
@@ -961,7 +961,7 @@ TestSync("Opslag: versie 25 → 26 zet DonateWave-tijden op de metingen, eigen w
 {
     var s = DefaultSettings(); s.DonateWave.OverlayDelayMs = 250; s.DonateWave.AlertGapMs = 2000; s.DonateWave.BetweenAnimationsMs = 1200;
     s.Version = 25; SettingsStore.Migrate(s);
-    Eq(28, s.Version);
+    Eq(29, s.Version);
     Eq(0, s.DonateWave.OverlayDelayMs); Eq(3240, s.DonateWave.AlertGapMs); Eq(1735, s.DonateWave.BetweenAnimationsMs);
     var s2 = DefaultSettings(); s2.DonateWave.OverlayDelayMs = 400; s2.DonateWave.AlertGapMs = 2500; s2.DonateWave.BetweenAnimationsMs = 900;
     s2.Version = 25; SettingsStore.Migrate(s2);
@@ -974,7 +974,7 @@ TestSync("Opslag: versie 22 → 23 werkt gemeten animatietijden bij, zelf afgest
     s.Triggers.Single(t => t.Id == "tw-special-desertking").StartDelayMs = 10560;   // oude meting
     s.Triggers.Single(t => t.Id == "tw-special-spikygroove").StartDelayMs = 8200;   // zelf afgesteld
     s.Version = 22; SettingsStore.Migrate(s);
-    Eq(28, s.Version);
+    Eq(29, s.Version);
     Eq(10560, s.Triggers.Single(t => t.Id == "tw-special-desertking").StartDelayMs, "videoduur (na alle updates)");
     Eq(8200, s.Triggers.Single(t => t.Id == "tw-special-spikygroove").StartDelayMs, "eigen afstelling blijft");
 });
@@ -1000,7 +1000,7 @@ TestSync("Opslag: versie 17 → 18 voegt de DonateWave-regels toe zonder eigen r
     var mine = new EventTrigger { Name = "Mijn tip-regel", EventType = EventTypes.Tip, MinCoins = 2000, ShowId = "preset-party" };
     s.Triggers.Add(mine); var count = s.Triggers.Count;
     s.Version = 17; SettingsStore.Migrate(s);
-    Eq(28, s.Version); Eq(count + 14, s.Triggers.Count, "14 regels erbij (3 bedragen + shout-out + 10 specials)");
+    Eq(29, s.Version); Eq(count + 14, s.Triggers.Count, "14 regels erbij (3 bedragen + shout-out + 10 specials)");
     Eq(2000, mine.MinCoins, "eigen regel ongewijzigd");
     SettingsStore.Migrate(s); Eq(count + 14, s.Triggers.Count, "niet dubbel");
 });
@@ -1064,6 +1064,95 @@ Test("Verbindingsdetails: API-adres, HTTP-status en foutcode zichtbaar, sleutel 
     True(rep.Contains("HTTP 200"), "laatste geslaagde verzoek");
     True(!rep.Contains("supergeheim1234567890"), "sleutel niet volledig");
     True(rep.Contains("BETTERTOK") && rep.Contains("GOVEE"), "ook BetterTok en lampen");
+});
+
+TestSync("Zone-effecten: alleen de zichtbare zones bewegen, de rest houdt de showkleur, wit = hele strip", () =>
+{
+    var z = new ZoneSetup(20, Enumerable.Range(9, 8).ToList(), false);
+    (byte, byte, byte) blue = (0, 60, 255);
+    for (var pat = 0; pat < ZoneEffects.Patterns; pat++)
+        for (var f = 0; f < 3; f++)
+        {
+            var zones = ZoneEffects.Render(z, blue, pat, f, 3, cozy: false);
+            Eq(20, zones.Count);
+            True(zones.Take(8).All(c => c == blue) && zones.Skip(16).All(c => c == blue), $"patroon {pat}: zone 1–8 en 17–20 blijven showkleur");
+            True(zones.Skip(8).Take(8).Any(c => c != blue), $"patroon {pat}: zichtbare zones krijgen een effect");
+        }
+    // om-en-om wisselt per beeld
+    var a = ZoneEffects.Render(z, blue, 0, 0, 2, false); var b = ZoneEffects.Render(z, blue, 0, 1, 2, false);
+    True(a[8] != b[8] && a[9] != b[9], "beams wisselen halverwege de stap");
+    // scanner loopt van zone 9 naar 16
+    var s0 = ZoneEffects.Render(z, blue, 1, 0, 8, false); var s7 = ZoneEffects.Render(z, blue, 1, 7, 8, false);
+    True(s0[8] == (255, 215, 240) && s7[15] == (255, 215, 240) && s0[15] != s0[8], "scanner begint links en eindigt rechts");
+    // partner is een festivalkleur die afsteekt (magenta/rood/paars eerst)
+    var p = ZoneEffects.Partner(blue, 0);
+    True(p != blue, "contrastkleur");
+    // wit en uit: hele strip hetzelfde
+    True(ZoneEffects.Render(z, (255, 255, 255), 1, 0, 3, false).All(c => c == (255, 255, 255)), "witte klap = hele strip wit");
+    True(ZoneEffects.Render(z, (0, 0, 0), 1, 0, 3, false).All(c => c == (0, 0, 0)), "uit = alles uit");
+    // gezellig: zacht verloop, geen wit
+    var cz = ZoneEffects.Render(z, (255, 200, 61), 1, 0, 1, cozy: true);
+    True(cz.All(c => !(c.r > 235 && c.g > 235 && c.b > 235)), "gezellig: geen wit");
+    True(cz[8] == (255, 200, 61) && cz[15] != cz[8], "gezellig: verloop over het zichtbare stuk");
+    Eq(1, ZoneEffects.FramesFor(1, 2000, 100, 8, cozy: true), "gezellig: niet bewegen");
+    Eq(8, ZoneEffects.FramesFor(1, 2000, 100, 8, cozy: false), "scanner: 8 beelden in een lange stap");
+    Eq(2, ZoneEffects.FramesFor(0, 2000, 100, 8, cozy: false), "beams: 2 beelden");
+});
+
+Test("Zone-effecten: engine stuurt per zone een kleur naar de strip (Direct), zones 9–16 bewegen", async () =>
+{
+    using var lamp = new FakeGoveeDevice(ScanPort, ControlPort, ListenPort);
+    using var govee = NewGovee();
+    var opts = new LightingOptions { ShowBrightness = 100, CommandDelayMs = 20, DirectColor = true, MinChangeMs = 100, LatencyMs = 0, ZoneEffects = true };
+    var engine = new LightShowEngine(govee, () => opts) { Zones = _ => new ZoneSetup(20, Enumerable.Range(9, 8).ToList(), false) };
+    var show = new LightShow { Id = "z", Name = "Zones", Steps = new ObservableCollection<LightStep>
+    {
+        LightStep.Color("#0040FF", 900), LightStep.Color("#FFFFFF", 300), LightStep.Color("#FF1020", 900), LightStep.Color("#00FF40", 900), LightStep.Color("#8A2BFF", 900)
+    } };
+    await engine.PlayAsync(show, new[] { "127.0.0.1" }, CancellationToken.None);
+    await Task.Delay(150);
+    List<string[]> frames; lock (lamp.ZoneFrames) frames = lamp.ZoneFrames.ToList();
+    Eq(0, lamp.BadPackets, "alle pakketten geldig");
+    var zoneFrames = frames.Where(f => f.Length == 20).ToList();
+    True(zoneFrames.Count >= 6, $"meerdere beelden met 20 zones ({zoneFrames.Count})");
+    True(zoneFrames.All(f => f.Take(8).Distinct().Count() == 1 && f.Skip(16).Distinct().Count() == 1 && f[0] == f[19]), "zone 1–8 en 17–20 steeds één showkleur");
+    True(zoneFrames.Any(f => f.Skip(8).Take(8).Any(c => c != f[0])), "zones 9–16 krijgen eigen kleuren");
+    True(zoneFrames.Any(f => f.All(c => c == "#FFFFFF")), "witte klap op de hele strip");
+    True(zoneFrames.Select(f => f[0]).Distinct().Count() >= 4, "showkleuren komen langs");
+    // zonder zones of met de schakelaar uit: weer de hele strip één kleur
+    opts.ZoneEffects = false; lock (lamp.ZoneFrames) lamp.ZoneFrames.Clear();
+    await engine.PlayAsync(show, new[] { "127.0.0.1" }, CancellationToken.None);
+    await Task.Delay(150);
+    lock (lamp.ZoneFrames) True(lamp.ZoneFrames.All(f => f.Distinct().Count() == 1), "schakelaar uit: hele strip één kleur");
+});
+
+Test("Zone-effecten: segmentmethode stuurt ptReal met de zichtbare segmenten", async () =>
+{
+    using var lamp = new FakeGoveeDevice(ScanPort, ControlPort, ListenPort);
+    using var govee = NewGovee();
+    var opts = new LightingOptions { ShowBrightness = 100, CommandDelayMs = 20, DirectColor = false, MinChangeMs = 100, LatencyMs = 0, ZoneEffects = true };
+    var engine = new LightShowEngine(govee, () => opts) { Zones = _ => new ZoneSetup(16, Enumerable.Range(9, 8).ToList(), true) };
+    var show = new LightShow { Id = "s", Name = "Seg", Steps = new ObservableCollection<LightStep> { LightStep.Color("#0040FF", 900), LightStep.Color("#FF1020", 900) } };
+    await engine.PlayAsync(show, new[] { "127.0.0.1" }, CancellationToken.None);
+    await Task.Delay(150);
+    var pt = lamp.Commands.Where(c => c.cmd == "ptReal").ToList();
+    True(pt.Count >= 2, $"ptReal per stap ({pt.Count})");
+    var masks = pt.SelectMany(c => c.data.GetProperty("command").EnumerateArray()).Select(e => Convert.FromBase64String(e.GetString()!))
+        .Select(b => b[12] | (b[13] << 8)).ToList();
+    True(masks.Aggregate(0, (m, x) => m | x) == 0xFFFF, "alle 16 segmenten gekleurd");
+    True(masks.Any(m => (m & 0x00FF) == 0x00FF), "segment 1–8 samen in de showkleur");
+    True(masks.All(m => (m & 0x00FF) == 0 || (m & 0x00FF) == 0x00FF), "segment 1–8 nooit gesplitst (rest van de strip blijft één kleur)");
+    True(masks.Any(m => (m & 0xFF00) != 0 && (m & 0x00FF) == 0), "segment 9–16: effectkleuren");
+});
+
+TestSync("Opslag: versie 28 → 29 zet de zichtbare segmenten 9–16 bij één strip (alleen als leeg)", () =>
+{
+    var s = DefaultSettings(); s.Devices.Add(new GoveeDeviceConfig { Ip = "192.168.1.5", Sku = "H619E" });
+    s.Version = 28; SettingsStore.Migrate(s);
+    Eq("9-16", s.Devices[0].VisibleZones);
+    var s2 = DefaultSettings(); s2.Devices.Add(new GoveeDeviceConfig { Ip = "192.168.1.5", VisibleZones = "1-4" });
+    s2.Version = 28; SettingsStore.Migrate(s2);
+    Eq("1-4", s2.Devices[0].VisibleZones, "eigen waarde blijft");
 });
 
 TestSync("Zones: Direct-pakket met eigen kleur per zone en segmentpakket (ptReal) byte voor byte", () =>
@@ -1130,7 +1219,7 @@ TestSync("Opslag: versie 26 → 28 voegt de binnenkomst-regels toe (één keer)"
     var s = DefaultSettings();
     foreach (var t in s.Triggers.Where(t => t.Id.StartsWith("te-")).ToList()) s.Triggers.Remove(t);
     s.Version = 26; SettingsStore.Migrate(s);
-    Eq(28, s.Version);
+    Eq(29, s.Version);
     Eq(2, s.Triggers.Count(t => t.Id.StartsWith("te-")));
     SettingsStore.Migrate(s);
     Eq(2, s.Triggers.Count(t => t.Id.StartsWith("te-")), "niet dubbel");
@@ -1952,7 +2041,7 @@ TestSync("Opslag: versie 13 → 14: rave-shows en geen snelheidslimiet bij direc
     s.Lighting.DirectColor = true; s.Lighting.MinChangeMs = 300;
     var old = Presets.Create("song-numb"); old.Steps.RemoveAt(0); s.Shows.Add(old);
     SettingsStore.Migrate(s);
-    Eq(28, s.Version);
+    Eq(29, s.Version);
     Eq(40, s.Lighting.MinChangeMs);
     ShowTiers.Apply(s);
     Eq(Presets.ToData(Presets.Create("song-numb", true).Steps), Presets.ToData(s.Shows[0].Steps), "rave-versie actief");
@@ -1985,7 +2074,7 @@ TestSync("Opslag: versie 12 → 13: songs krijgen twee versies, direct springen 
     s.Lighting.MinChangeMs = 550;
     var old = Presets.Create("song-numb"); old.FastData = ""; old.SafeData = ""; old.Steps.RemoveAt(0); s.Shows.Add(old);
     SettingsStore.Migrate(s);
-    Eq(28, s.Version);
+    Eq(29, s.Version);
     Eq(40, s.Lighting.MinChangeMs, "versie 13 zet 300, versie 14 daarna 40");
     True(s.Shows[0].HasTiers, "song heeft club + veilig");
     ShowTiers.Apply(s);
@@ -2075,7 +2164,7 @@ TestSync("Opslag: versie 15 → 16 voegt alle dono-sounds toe, koppelt ze zoals 
     s.Triggers.Add(new EventTrigger { Name = "Mijn eigen regel", EventType = EventTypes.Gift, GiftNames = "Leeuw", ShowId = weg.Id });
     var t30000 = s.Triggers.Single(t => t.Id == "tf-30000"); t30000.ShowId = "preset-megagift"; t30000.Name = "Gift 30000+ coins";
     SettingsStore.Migrate(s); SettingsStore.EnsureDefaults(s, false);
-    Eq(28, s.Version);
+    Eq(29, s.Version);
     Eq(49, s.Shows.Count(x => x.PresetKey.StartsWith("song-")), "49 song-shows");
     True(s.Shows.All(x => x.PresetKey != "song-oud"), "sound die niet meer bestaat is weg");
     True(s.Triggers.All(t => t.Id != "tf-oud"), "standaardkoppeling naar die sound is weg");

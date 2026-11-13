@@ -20,6 +20,8 @@ public sealed class FakeGoveeDevice : IDisposable
     public (int r, int g, int b) Color { get; private set; } = (255, 255, 255);
     public bool RespondToStatus { get; set; } = true;
     public string Mac { get; set; } = "AA:BB:CC:DD:EE:FF:00:11";
+    /// <summary>Alle Direct-beelden: kleur per zone (zone 1 = index 0).</summary>
+    public List<string[]> ZoneFrames { get; } = new();
     /// <summary>Realtime-modus (razer-protocol) staat aan.</summary>
     public bool DirectOn { get; private set; }
     /// <summary>Kent de strip het razer-protocol? (zo niet: negeren, zoals een oude strip doet)</summary>
@@ -78,6 +80,9 @@ public sealed class FakeGoveeDevice : IDisposable
                         if (count * 3 + 2 != len) { BadPackets++; break; }
                         Color = (p[6], p[7], p[8]);
                         lock (DirectColors) DirectColors.Add($"#{p[6]:X2}{p[7]:X2}{p[8]:X2}");
+                        var zf = new string[count];
+                        for (var z = 0; z < count; z++) zf[z] = $"#{p[6 + 3 * z]:X2}{p[7 + 3 * z]:X2}{p[8 + 3 * z]:X2}";
+                        lock (ZoneFrames) ZoneFrames.Add(zf);
                     }
                     break;
             }

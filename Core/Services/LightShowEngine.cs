@@ -31,6 +31,9 @@ public sealed class LightShowEngine
         _options = options;
     }
 
+    /// <summary>Per lamp (IP) de zones die op stream te zien zijn, of null. Ingevuld door de controller.</summary>
+    public Func<string, ZoneSetup?>? Zones { get; set; }
+
     public event Action<LightFrame>? Frame;
     public event Action<string?>? Finished;   // showId of null
 
@@ -54,6 +57,9 @@ public sealed class LightShowEngine
         var minPhase = opt.DirectColor ? opt.EffectiveCommandDelayMs + 15 : opt.CommandDelayMs + 25;
         // Strobe-veiligheid: hooguit 3 flitsen per seconde (instelbaar), voor kijkers die gevoelig zijn voor flitsen
         var minFlashCycle = opt.LimitStrobes ? 333 : 0;
+        // Zone-effecten op de stukjes strip die op stream te zien zijn
+        var cozy = Presets.CozySongs.Contains(show.PresetKey);
+        var zoneStep = 0;
         await ForAll(ips, ip => EnsureOnAndBrightness(ip, maxBri, token));
         // "Licht eerder sturen": het hele schema schuift naar voren om wifi/strip-vertraging op te vangen.
         long planned = -opt.LatencyMs - Math.Max(0, startOffsetMs);
@@ -130,7 +136,12 @@ public sealed class LightShowEngine
                                 var c = ColorUtil.Lerp(from, target, f / (double)frames);
                                 Emit(show, i, rep, ColorUtil.ToHex(c.r, c.g, c.b), step.Brightness, true, Progress());
                                 var frameAt = stepStart + (long)(fade * ((f - 1) / (double)frames));
-                                if (Allowed(frameAt) || f == frames) { lastSend = frameAt; await ForAll(ips, ip => SetColor(ip, c, token)); }
+                                if (Allowed(frameAt) || f == frames)
+                                {
+                                    lastSend = frameAt;
+                                    if (f == frames) { var pat = zoneStep / 2 % ZoneEffects.Patterns; await ForAll(ips, ip => PaintAsync(ip, c, pat, 0, 1, cozy, opt, token)); }
+                                    else await ForAll(ips, ip => SetColor(ip, c, token));
+                                }
                                 await HoldUntil(clock, stepStart + (long)(fade * (f / (double)frames)), token);
                             }
                         }
@@ -141,8 +152,13 @@ public sealed class LightShowEngine
                             var skipStrobe = opt.LimitStrobes && white && stepStart - lastWhite < 333;
                             if (white && !skipStrobe) lastWhite = stepStart;
                             Emit(show, i, rep, targetHex, step.Brightness, true, Progress());
-                            if (!skipStrobe && Allowed(stepStart)) await ForAll(ips, ip => SetColor(ip, target, token));
+                            if (!skipStrobe && Allowed(stepStart))
+                            {
+                                var pat = zoneStep / 2 % ZoneEffects.Patterns;
+                                await ForAll(ips, ip => ZoneStepAsync(ip, target, pat, stepStart, step.DurationMs, clock, cozy, opt, token));
+                            }
                         }
+                        if (step.ColorHex != "#FFFFFF") zoneStep++;
                         current = target;
                         await HoldUntil(clock, stepStart + step.DurationMs, token);
                     }
@@ -173,6 +189,61 @@ public sealed class LightShowEngine
         {
             Finished?.Invoke(show.Id);
         }
+    }
+
+    private ZoneSetup? ZonesFor(string ip, LightingOptions opt)
+    {
+        if (!opt.ZoneEffects) return null;
+        var z = Zones?.Invoke(ip);
+        return z is { Visible.Count: > 0 } ? z : null;
+    }
+
+    /// <summary>Eén stap met zone-effect: bewegende patronen krijgen meerdere beelden binnen de stap.</summary>
+    private async Task ZoneStepAsync(string ip, (byte r, byte g, byte b) target, int pattern, long stepStart, int durationMs,
+        Stopwatch clock, bool cozy, LightingOptions opt, CancellationToken token)
+    {
+        var z = ZonesFor(ip, opt);
+        if (z == null) { await SetColor(ip, target, token); return; }
+        var frameMin = z.Segment ? Math.Max(opt.MinChangeMs, 400) : Math.Max(opt.MinChangeMs, 90);
+        var frames = ZoneEffects.FramesFor(pattern, durationMs, frameMin, z.Visible.Count, cozy);
+        for (var f = 0; f < frames; f++)
+        {
+            if (f > 0) await HoldUntil(clock, stepStart + (long)(durationMs * (f / (double)frames)), token);
+            await SendZonesAsync(ip, z, ZoneEffects.Render(z, target, pattern, f, frames, cozy), target, token);
+        }
+    }
+
+    /// <summary>Kleur met zone-effect (één beeld), of gewoon de hele strip als er geen zones zijn.</summary>
+    private Task PaintAsync(string ip, (byte r, byte g, byte b) c, int pattern, int frame, int frames, bool cozy, LightingOptions opt, CancellationToken token)
+    {
+        var z = ZonesFor(ip, opt);
+        return z == null ? SetColor(ip, c, token) : SendZonesAsync(ip, z, ZoneEffects.Render(z, c, pattern, frame, frames, cozy), c, token);
+    }
+
+    private async Task SendZonesAsync(string ip, ZoneSetup z, IReadOnlyList<(byte r, byte g, byte b)> zones, (byte r, byte g, byte b) main, CancellationToken token)
+    {
+        long since;
+        bool known;
+        lock (_gate) known = _directSince.TryGetValue(ip, out since);
+        if (!z.Segment)
+        {
+            if (!known || Environment.TickCount64 - since > 20_000)
+            {
+                await _govee.DirectModeAsync(ip, true, token);
+                lock (_gate) _directSince[ip] = Environment.TickCount64;
+            }
+            await _govee.DirectZonesAsync(ip, zones, token);
+        }
+        else
+        {
+            if (known)
+            {
+                await _govee.DirectModeAsync(ip, false, token);
+                lock (_gate) _directSince.Remove(ip);
+            }
+            await _govee.SegmentColorsAsync(ip, zones, token);
+        }
+        Remember(ip, hex: ColorUtil.ToHex(main.r, main.g, main.b));
     }
 
     private void Emit(LightShow show, int step, int rep, string hex, int bri, bool on, double progress) =>

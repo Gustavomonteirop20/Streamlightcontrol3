@@ -140,6 +140,9 @@ public sealed class LightingOptions : ObservableObject
     public bool SegmentEffects { get => _segmentEffects; set => Set(ref _segmentEffects, value); }
     /// <summary>Aantal segmenten van de strip (H619E: meestal 15).</summary>
     public int SegmentCount { get => _segmentCount; set => Set(ref _segmentCount, Math.Clamp(value, 2, 30)); }
+    private bool _zoneEffects = true;
+    /// <summary>Festival-effecten op de stukjes strip die op stream te zien zijn (Device Manager › Zones op stream).</summary>
+    public bool ZoneEffects { get => _zoneEffects; set => Set(ref _zoneEffects, value); }
 }
 
 public sealed class FollowOptions : ObservableObject
@@ -294,7 +297,7 @@ public sealed class OverlayOptions : ObservableObject
 
 public sealed class AppSettings
 {
-    public int Version { get; set; } = 28;
+    public int Version { get; set; } = 29;
     public BetterTokOptions BetterTok { get; set; } = new();
     public ObservableCollection<GoveeDeviceConfig> Devices { get; set; } = new();
     public ObservableCollection<LightShow> Shows { get; set; } = new();

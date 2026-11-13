@@ -379,7 +379,15 @@ public sealed class SettingsStore : IDisposable
             s.Version = 28;
             changed = true;
         }
-        if (changed && s.Version < 28) s.Version = 28;
+        if (startVersion < 29)
+        {
+            // Versie 29: zichtbare stukjes strip op stream (opgegeven: segmenten 9 t/m 16) voor de zone-effecten
+            var strips = s.Devices.Where(d => d.Enabled).ToList();
+            if (strips.Count == 1 && strips[0].VisibleZones.Length == 0) strips[0].VisibleZones = "9-16";
+            s.Version = 29;
+            changed = true;
+        }
+        if (changed && s.Version < 29) s.Version = 29;
         return changed;
     }
 

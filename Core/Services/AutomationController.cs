@@ -47,6 +47,15 @@ public sealed class AutomationController : IDisposable
         History = new HistoryStore(Store.DataDirectory);
         Govee = govee ?? new GoveeLanClient();
         Engine = new LightShowEngine(Govee, () => Settings.Lighting);
+        Engine.Zones = ip =>
+        {
+            var d = Settings.Devices.FirstOrDefault(x => x.Ip == ip && x.Enabled);
+            if (d == null || d.VisibleZones.Length == 0) return null;
+            var segment = d.ZoneMethod == "segment";
+            var count = segment ? Math.Min(d.ZoneCount, 16) : d.ZoneCount;
+            var vis = GoveeDeviceConfig.ParseZones(d.VisibleZones, count).ToList();
+            return vis.Count == 0 ? null : new ZoneSetup(count, vis, segment);
+        };
         Queue = new AutomationQueue(Engine, () => _targets, () => Settings.Queue);
         BetterTok = new BetterTokClient(Errors);
         DonateWave = new DonateWaveClient(Errors, donateWaveHttp);

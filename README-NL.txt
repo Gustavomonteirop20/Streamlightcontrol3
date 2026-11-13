@@ -328,6 +328,13 @@ Sound en show lopen gelijk: de app rekent vanaf het moment van de tip (DonateWav
 Versie 3.18: de overlay laat een tip iets later zien dan het moment van de tip (ontvangen + animatie en
 geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later laten beginnen dan de tip" op de
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
+ZONE-EFFECTEN (versie 3.32) – Device Manager › "Zones op stream".
+De stukjes strip die op stream te zien zijn (bij jou segmenten 9 t/m 16, al ingevuld) krijgen tijdens shows
+festival-effecten zoals in een hardstyle-tent: beams om-en-om, een scanner die over het stuk loopt, licht vanuit het
+midden en contrasterende washes in magenta, rood en paars. De rest van de strip houdt de kleur van de show; op de
+kicks gaat de hele strip wit. Gezellige shows (Thomas) krijgen een zacht kleurverloop. Kies bij "Methode die werkte"
+A (Direct-zones) of B (Segmenten), wat bij de zones-test werkte. Uitzetten: schakelaar "Festival-effecten op deze zones".
+
 ZONES-TEST (versie 3.31) – Device Manager › kies je strip › "Zones op stream (test)".
 Zoekt uit welke stukjes van de strip op stream te zien zijn, als voorbereiding op shows waarbij alleen die stukjes
 (of elk stukje apart) meedoen. Methode A gebruikt de Direct-modus (snel, ook voor shows op de beat);
