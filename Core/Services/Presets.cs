@@ -59,6 +59,9 @@ public static class Presets
         Id = id, Name = name, Repeats = 1, Steps = ParseData(data)
     };
 
+    /// <summary>Gezellige song-shows (bijv. een kinderliedje): warme kleuren en zachte overgangen, geen wit of strobes.</summary>
+    public static readonly IReadOnlySet<string> CozySongs = new HashSet<string> { "song-thomas" };
+
     /// <summary>Presets met een snelle club-versie voor strips die direct springen.</summary>
     public static readonly IReadOnlySet<string> FastKeys = new HashSet<string> { Police, Party, Follow, Victory, BigGift, SmallGift, MediumGift, MegaGift };
 

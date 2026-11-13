@@ -140,7 +140,7 @@ TestSync("Opslag: versie 4 → 5 vervangt oude coin-bereiken door de BetterTok-r
     s.Triggers.Add(new EventTrigger { Name = "Mijn Rose", EventType = EventTypes.Gift, GiftNames = "Rose", ShowId = "preset-police" });
     SettingsStore.Migrate(s);
     SettingsStore.EnsureDefaults(s, false);
-    Eq(27, s.Version);
+    Eq(28, s.Version);
     True(s.Triggers.All(t => t.Name != "Gift 100–499 coins"), "oude standaard weg");
     Eq(14999, s.Triggers.Single(t => t.Id == "tf-10000").MaxCoins, "bestaande regel bijgewerkt");
     True(s.Triggers.Any(t => t.Name == "Mijn Rose"), "eigen regel blijft");
@@ -467,6 +467,25 @@ TestSync("Song-shows: alle 49 aanwezig (47 dono + 2 binnenkomst), lengte gelijk 
     Eq(49, s.Shows.Count(x => x.PresetKey.StartsWith("song-")), "staan in de lijst met lichtshows");
 });
 
+TestSync("Binnenkomst Thomas is gezellig: warme kleuren, zachte overgangen, geen wit, zwart of strobe", () =>
+{
+    True(Presets.CozySongs.Contains("song-thomas"), "Thomas staat bij de gezellige shows");
+    // wie de rave-versie al had (versie 27), krijgt de gezellige
+    var old = DefaultSettings(); var th = old.Shows.First(x => x.PresetKey == "song-thomas");
+    th.Steps.Clear(); th.Steps.Add(LightStep.Color("#FFFFFF", 100)); old.Version = 27; SettingsStore.Migrate(old);
+    Eq(0, old.Shows.First(x => x.PresetKey == "song-thomas").Steps.Count(st => st.ColorHex == "#FFFFFF"), "oude rave-versie vervangen");
+    foreach (var fast in new[] { true, false })
+    {
+        var show = Presets.Create("song-thomas", fast);
+        Eq(0, show.Steps.Count(st => st.ColorHex is "#FFFFFF" or "#000000"), (fast ? "snel" : "veilig") + ": geen wit of zwart");
+        Eq(0, show.Steps.Count(st => st.Flashes > 1), "geen strobe");
+        True(show.Steps.All(st => st.TransitionMs > 0), "overal een zachte overgang");
+        True(Math.Abs(show.TotalDurationMs - 28395) <= 5, $"precies zo lang als de sound ({show.TotalDurationMs} ms)");
+        True(show.Steps.Count / 28.4 <= 1.8, "rustig tempo, geen geflits");
+    }
+    True(Presets.Create("song-thomas", true).Steps.Count > Presets.Create("song-thomas", false).Steps.Count, "snelle versie gaat in het refrein op elke beat mee");
+});
+
 TestSync("Song-shows: opeenvolgende kleuren verschillen sterk (≥ 100°) en er zijn witte flitsen", () =>
 {
     static double Hue(string hex)
@@ -477,7 +496,7 @@ TestSync("Song-shows: opeenvolgende kleuren verschillen sterk (≥ 100°) en er 
         var h = max == R ? 60 * ((G - B) / d % 6) : max == G ? 60 * ((B - R) / d + 2) : 60 * ((R - G) / d + 4);
         return h < 0 ? h + 360 : h;
     }
-    foreach (var song in SongShows.All)
+    foreach (var song in SongShows.All.Where(x => !Presets.CozySongs.Contains(x.Key)))   // gezellige shows: zie aparte test
     {
         var show = Presets.Create(song.Key);
         var colored = show.Steps.Where(st => st.ColorHex is not ("#FFFFFF" or "#000000")).Select(st => st.ColorHex).ToList();
@@ -503,7 +522,7 @@ TestSync("Opslag: versie 9 → 10: Rave-varianten weg, koppelingen omgezet, 4 wi
     s.Shows.Add(new LightShow { Id = "preset-song-numb-rave", Name = "♪ Numb · Rave", PresetKey = "song-numb-rave" });
     s.Triggers.Add(new EventTrigger { Name = "eigen", EventType = EventTypes.Gift, GiftNames = "Rose", ShowId = "preset-song-numb-rave" });
     SettingsStore.Migrate(s);
-    Eq(27, s.Version);
+    Eq(28, s.Version);
     Eq(0, s.Shows.Count(x => x.PresetKey.EndsWith("-rave")), "Rave-shows weg");
     Eq("preset-song-numb", s.Triggers.Single(t => t.Name == "eigen").ShowId, "koppeling omgezet");
     Eq(550, s.Lighting.MinChangeMs, "versie 12 zet de limiet op 550 ms");
@@ -517,7 +536,7 @@ TestSync("Opslag: versie 11 → 12: limiet 550 ms, songs en presets vernieuwd, e
     var police = Presets.Create(Presets.Police); police.Steps[0].DurationMs = 320; s.Shows.Add(police);
     var song = Presets.Create("song-numb"); song.Steps.Add(LightStep.Color("#FF0000", 100, 100, 1, 0)); s.Shows.Add(song);
     SettingsStore.Migrate(s);
-    Eq(27, s.Version);
+    Eq(28, s.Version);
     Eq(550, s.Lighting.MinChangeMs);
     Eq(600, s.Shows.Single(x => x.PresetKey == Presets.Police).Steps[0].DurationMs, "Police vernieuwd");
     Eq(Presets.Create("song-numb").Steps.Count, s.Shows.Single(x => x.PresetKey == "song-numb").Steps.Count, "song vernieuwd");
@@ -535,7 +554,7 @@ TestSync("Opslag: versie 3 → 4 zet snelle flitsmodus aan en vernieuwt Police",
     s.Shows.Add(oldPolice);
     SettingsStore.Migrate(s);
     Eq(FlashMode.Black, s.Lighting.FlashMode);
-    Eq(27, s.Version);
+    Eq(28, s.Version);
     True(s.Shows.Single(x => x.PresetKey == Presets.Police).Steps.Count > 1, "Police vernieuwd");
 });
 
@@ -932,7 +951,7 @@ Test("DonateWave: 401 stopt met vragen, 429 wacht, netwerkfout probeert opnieuw 
 TestSync("Opslag: versie 23 → 24 zet naam/bedrag-tijd op 2 s, eigen waarde blijft", () =>
 {
     var s = DefaultSettings(); s.DonateWave.AlertGapMs = 300; s.Version = 23; SettingsStore.Migrate(s);
-    Eq(27, s.Version);
+    Eq(28, s.Version);
     Eq(3240, s.DonateWave.AlertGapMs, "via 2000 naar de gemeten 3240");
     var s2 = DefaultSettings(); s2.DonateWave.AlertGapMs = 1500; s2.Version = 23; SettingsStore.Migrate(s2);
     Eq(1500, s2.DonateWave.AlertGapMs, "zelf ingesteld blijft");
@@ -942,7 +961,7 @@ TestSync("Opslag: versie 25 → 26 zet DonateWave-tijden op de metingen, eigen w
 {
     var s = DefaultSettings(); s.DonateWave.OverlayDelayMs = 250; s.DonateWave.AlertGapMs = 2000; s.DonateWave.BetweenAnimationsMs = 1200;
     s.Version = 25; SettingsStore.Migrate(s);
-    Eq(27, s.Version);
+    Eq(28, s.Version);
     Eq(0, s.DonateWave.OverlayDelayMs); Eq(3240, s.DonateWave.AlertGapMs); Eq(1735, s.DonateWave.BetweenAnimationsMs);
     var s2 = DefaultSettings(); s2.DonateWave.OverlayDelayMs = 400; s2.DonateWave.AlertGapMs = 2500; s2.DonateWave.BetweenAnimationsMs = 900;
     s2.Version = 25; SettingsStore.Migrate(s2);
@@ -955,7 +974,7 @@ TestSync("Opslag: versie 22 → 23 werkt gemeten animatietijden bij, zelf afgest
     s.Triggers.Single(t => t.Id == "tw-special-desertking").StartDelayMs = 10560;   // oude meting
     s.Triggers.Single(t => t.Id == "tw-special-spikygroove").StartDelayMs = 8200;   // zelf afgesteld
     s.Version = 22; SettingsStore.Migrate(s);
-    Eq(27, s.Version);
+    Eq(28, s.Version);
     Eq(10560, s.Triggers.Single(t => t.Id == "tw-special-desertking").StartDelayMs, "videoduur (na alle updates)");
     Eq(8200, s.Triggers.Single(t => t.Id == "tw-special-spikygroove").StartDelayMs, "eigen afstelling blijft");
 });
@@ -981,7 +1000,7 @@ TestSync("Opslag: versie 17 → 18 voegt de DonateWave-regels toe zonder eigen r
     var mine = new EventTrigger { Name = "Mijn tip-regel", EventType = EventTypes.Tip, MinCoins = 2000, ShowId = "preset-party" };
     s.Triggers.Add(mine); var count = s.Triggers.Count;
     s.Version = 17; SettingsStore.Migrate(s);
-    Eq(27, s.Version); Eq(count + 14, s.Triggers.Count, "14 regels erbij (3 bedragen + shout-out + 10 specials)");
+    Eq(28, s.Version); Eq(count + 14, s.Triggers.Count, "14 regels erbij (3 bedragen + shout-out + 10 specials)");
     Eq(2000, mine.MinCoins, "eigen regel ongewijzigd");
     SettingsStore.Migrate(s); Eq(count + 14, s.Triggers.Count, "niet dubbel");
 });
@@ -1077,12 +1096,12 @@ TestSync("Binnenkomst: Thomas en Diego krijgen hun eigen show, andere kijkers ni
     Eq(49, SongShows.All.Count());
 });
 
-TestSync("Opslag: versie 26 → 27 voegt de binnenkomst-regels toe (één keer)", () =>
+TestSync("Opslag: versie 26 → 28 voegt de binnenkomst-regels toe (één keer)", () =>
 {
     var s = DefaultSettings();
     foreach (var t in s.Triggers.Where(t => t.Id.StartsWith("te-")).ToList()) s.Triggers.Remove(t);
     s.Version = 26; SettingsStore.Migrate(s);
-    Eq(27, s.Version);
+    Eq(28, s.Version);
     Eq(2, s.Triggers.Count(t => t.Id.StartsWith("te-")));
     SettingsStore.Migrate(s);
     Eq(2, s.Triggers.Count(t => t.Id.StartsWith("te-")), "niet dubbel");
@@ -1817,7 +1836,7 @@ static string FixturePath(string name)
 
 TestSync("Festival-versies: drops uit de audio, overal felle kleur (nergens zwart), flash op de kicks, strobe wit ↔ kleur ≤ 2 maten, strip A/B", () =>
 {
-    foreach (var song in SongShows.All)
+    foreach (var song in SongShows.All.Where(x => !Presets.CozySongs.Contains(x.Key)))   // gezellige shows hebben bewust geen flashes
     {
         var show = Presets.Create(song.Key, fast: true);
         var safe = Presets.Create(song.Key, fast: false);
@@ -1904,7 +1923,7 @@ TestSync("Opslag: versie 13 → 14: rave-shows en geen snelheidslimiet bij direc
     s.Lighting.DirectColor = true; s.Lighting.MinChangeMs = 300;
     var old = Presets.Create("song-numb"); old.Steps.RemoveAt(0); s.Shows.Add(old);
     SettingsStore.Migrate(s);
-    Eq(27, s.Version);
+    Eq(28, s.Version);
     Eq(40, s.Lighting.MinChangeMs);
     ShowTiers.Apply(s);
     Eq(Presets.ToData(Presets.Create("song-numb", true).Steps), Presets.ToData(s.Shows[0].Steps), "rave-versie actief");
@@ -1937,7 +1956,7 @@ TestSync("Opslag: versie 12 → 13: songs krijgen twee versies, direct springen 
     s.Lighting.MinChangeMs = 550;
     var old = Presets.Create("song-numb"); old.FastData = ""; old.SafeData = ""; old.Steps.RemoveAt(0); s.Shows.Add(old);
     SettingsStore.Migrate(s);
-    Eq(27, s.Version);
+    Eq(28, s.Version);
     Eq(40, s.Lighting.MinChangeMs, "versie 13 zet 300, versie 14 daarna 40");
     True(s.Shows[0].HasTiers, "song heeft club + veilig");
     ShowTiers.Apply(s);
@@ -2027,7 +2046,7 @@ TestSync("Opslag: versie 15 → 16 voegt alle dono-sounds toe, koppelt ze zoals 
     s.Triggers.Add(new EventTrigger { Name = "Mijn eigen regel", EventType = EventTypes.Gift, GiftNames = "Leeuw", ShowId = weg.Id });
     var t30000 = s.Triggers.Single(t => t.Id == "tf-30000"); t30000.ShowId = "preset-megagift"; t30000.Name = "Gift 30000+ coins";
     SettingsStore.Migrate(s); SettingsStore.EnsureDefaults(s, false);
-    Eq(27, s.Version);
+    Eq(28, s.Version);
     Eq(49, s.Shows.Count(x => x.PresetKey.StartsWith("song-")), "49 song-shows");
     True(s.Shows.All(x => x.PresetKey != "song-oud"), "sound die niet meer bestaat is weg");
     True(s.Triggers.All(t => t.Id != "tf-oud"), "standaardkoppeling naar die sound is weg");

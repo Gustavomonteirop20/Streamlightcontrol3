@@ -330,7 +330,7 @@ geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later late
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
 BINNENKOMST-SHOWS (versie 3.30) – Regels › "♪ Binnenkomst Thomas" en "♪ Binnenkomst Diego".
 Komt Thomas of Diego de LIVE binnen (BetterTok: join/member), dan speelt zijn eigen ♪-show op zijn binnenkomst-sound
-(Thomas 135 BPM, 28,4 s; Diego "Black Water" 160 BPM, 32,0 s). De volgende show wacht tot de sound klaar is.
+(Thomas: kinderliedje, gezellige show met warme kleuren en zachte overgangen, 28,4 s; Diego "Black Water" 160 BPM festival, 32,0 s). De volgende show wacht tot de sound klaar is.
 Andere kijkers krijgen deze show niet. Klopt de naam niet precies? Pas bij de regel "Alleen voor deze kijker(s)"
 de TikTok-naam (zonder @) of weergavenaam aan; meerdere namen met een komma. Testen: Regels › "Thomas komt binnen".
 

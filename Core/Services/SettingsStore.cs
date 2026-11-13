@@ -371,7 +371,15 @@ public sealed class SettingsStore : IDisposable
             s.Version = 27;
             changed = true;
         }
-        if (changed && s.Version < 27) s.Version = 27;
+        if (startVersion < 28)
+        {
+            // Versie 28: binnenkomst Thomas is een kinderliedje → gezellige show in plaats van de rave-versie
+            foreach (var show in s.Shows.Where(x => x.PresetKey == "song-thomas"))
+                show.CopyFrom(Presets.Create(show.PresetKey));
+            s.Version = 28;
+            changed = true;
+        }
+        if (changed && s.Version < 28) s.Version = 28;
         return changed;
     }
 
