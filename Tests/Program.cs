@@ -1066,7 +1066,7 @@ Test("Verbindingsdetails: API-adres, HTTP-status en foutcode zichtbaar, sleutel 
     True(rep.Contains("BETTERTOK") && rep.Contains("GOVEE"), "ook BetterTok en lampen");
 });
 
-TestSync("Rustige shows: alle 49 sounds zonder wit, hooguit ±1,5 wissels/s, kleur per sectie van ±3,5 s", () =>
+TestSync("Rustige shows: alle 49 sounds zonder wit, zones op de beat maar < 3 wissels/s, kleur per sectie van ±3,5 s", () =>
 {
     var z = new ZoneSetup(20, Enumerable.Range(11, 10).ToList(), false);
     var patternOrders = new HashSet<string>();
@@ -1079,7 +1079,8 @@ TestSync("Rustige shows: alle 49 sounds zonder wit, hooguit ±1,5 wissels/s, kle
             var frames = CalmShow.Build(show, cozy);
             True(frames.Count > 0, song.Key);
             Eq((long)show.TotalDurationMs, frames[^1].AtMs + frames[^1].DurationMs, song.Key + ": even lang als de sound");
-            True(CalmShow.ChangesPerSecond(frames) <= 1.6, $"{song.Key}: {CalmShow.ChangesPerSecond(frames):0.00} wissels/s");
+            True(CalmShow.ChangesPerSecond(frames) < 3.0, $"{song.Key}: {CalmShow.ChangesPerSecond(frames):0.00} wissels/s");
+            if (!cozy && fast) True(CalmShow.ChangesPerSecond(frames) >= 1.6, $"{song.Key}: tempo ({CalmShow.ChangesPerSecond(frames):0.00} wissels/s) – zones bewegen op de beat");
             for (var i = 1; i < frames.Count; i++)
                 True(frames[i].AtMs - frames[i - 1].AtMs >= (cozy ? CalmShow.CozyMinTickMs : CalmShow.MinTickMs), $"{song.Key}: twee wissels te kort na elkaar");
             True(frames.All(f => !(f.Color.r > 235 && f.Color.g > 235 && f.Color.b > 235) && f.Color != (0, 0, 0)), song.Key + ": geen wit of zwart als sectiekleur");
@@ -1129,7 +1130,7 @@ Test("Rustige shows: engine stuurt per tik de zones, zone 1–10 houdt dezelfde 
     await Task.Delay(150);
     List<string[]> frames; lock (lamp.ZoneFrames) frames = lamp.ZoneFrames.ToList();
     Eq(0, lamp.BadPackets);
-    True(frames.Count is >= 6 and <= 13, $"{frames.Count} beelden in 7,2 s (≤ ±1,5 per seconde)");
+    True(frames.Count is >= 14 and <= 17, $"{frames.Count} beelden in 7,2 s (elke beat van 450 ms)");
     True(frames.All(f => f.Length == 20), "20 zones");
     True(frames.All(f => f.All(c => c != "#FFFFFF")), "nooit wit");
     True(frames.Select(f => f[0]).Distinct().Count() <= 2, "zone 1–10: hooguit één kleurwissel (twee secties)");

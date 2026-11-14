@@ -330,7 +330,7 @@ geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later late
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
 RUSTIGE SHOWS (versie 3.33) – Device Manager › "Rustige shows (minder knipperen)", standaard aan.
 Zoals in het voorbeeldfilmpje: per stuk van het nummer (±3,5 s) één kleur uit de show zelf, geen witte flitsen en
-hooguit ±1,5 wissels per seconde (ruim onder de 3 per seconde die als veilig geldt voor kijkers). De zones die op
+de zones bewegen op elke beat (hooguit ±2,8 wissels per seconde, onder de 3 die als veilig geldt). De zones die op
 stream te zien zijn (bij jou Direct-zones 11 t/m 20, al ingevuld) bewegen op de beat: om-en-om, vullen, een looplicht,
 vanuit het midden, ademen of willekeurig; elke show een eigen volgorde. De rest van de strip is een rustige gloed in
 dezelfde kleur. Gezellige shows (Thomas) vullen en ademen alleen, en worden nooit donker.

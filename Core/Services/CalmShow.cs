@@ -8,13 +8,13 @@ public sealed record CalmFrame(long AtMs, int DurationMs, (byte r, byte g, byte 
 /// <summary>
 /// "Rustige shows" (minder knipperen), zoals in het voorbeeldfilmpje: per sectie (±3,5 s) één kleur, en de stukjes
 /// strip die op stream te zien zijn bewegen op de beat (om-en-om, vullen, looplicht, vanuit het midden, ademen,
-/// willekeurig). Geen witte flitsen, hooguit ±1,5 wissels per seconde. De kleuren komen uit de show zelf, dus elke
+/// willekeurig). Geen witte flitsen, de zones bewegen op elke beat (hooguit ±2,8 wissels per seconde). De kleuren komen uit de show zelf, dus elke
 /// show blijft anders; de volgorde van de patronen hangt ook af van de show.
 /// </summary>
 public static class CalmShow
 {
     public const int Patterns = 6;
-    public const int MinTickMs = 640;        // ≤ ±1,5 wissels per seconde (ruim onder de 3 per seconde die als veilig geldt)
+    public const int MinTickMs = 360;        // elke beat (tot ±165 BPM), ≤ ±2,8 wissels per seconde: onder de 3 per seconde die als veilig geldt
     public const int CozyMinTickMs = 850;
     public const int SectionMs = 3500;
 
@@ -24,9 +24,19 @@ public static class CalmShow
         // 1. Tikken: begin van elke stap, maar nooit sneller dan minTick
         var ticks = new List<long>();
         long t = 0, last = long.MinValue / 2;
+        // Beat-lengte uit het tempo van het nummer: lange stappen krijgen tussentikken op de beat
+        var bpm = SongShows.All.FirstOrDefault(x => x.Key == show.PresetKey)?.Bpm ?? 0;
+        var beat = bpm > 0 ? 60000.0 / bpm : 0;
+        while (beat > 0 && beat < minTick) beat *= 2;      // te snel voor de strip/kijkers: om de 2 beats
         foreach (var st in show.Steps)
         {
             if (t - last >= minTick) { ticks.Add(t); last = t; }
+            if (beat > 0)
+                for (var b = t + beat; b < t + st.DurationMs - minTick * 0.5; b += beat)
+                {
+                    var bt = (long)Math.Round(b);
+                    if (bt - last >= minTick) { ticks.Add(bt); last = bt; }
+                }
             t += st.DurationMs;
         }
         var total = t;
