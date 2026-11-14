@@ -147,6 +147,10 @@ public sealed class LightingOptions : ObservableObject
     /// <summary>Rustige shows: per sectie één kleur, geen witte flitsen, hooguit ±1,5 wissels per seconde;
     /// de zichtbare zones bewegen op de beat (zoals in het voorbeeldfilmpje).</summary>
     public bool CalmShows { get => _calmShows; set => Set(ref _calmShows, value); }
+    private bool _calmFlashes = true;
+    /// <summary>Festival-flitsen in de rustige shows: korte witte flits op de drop en op kicks in de drop,
+    /// altijd minder dan 3 flitsen per seconde.</summary>
+    public bool CalmFlashes { get => _calmFlashes; set => Set(ref _calmFlashes, value); }
 }
 
 public sealed class FollowOptions : ObservableObject

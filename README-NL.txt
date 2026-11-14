@@ -328,6 +328,15 @@ Sound en show lopen gelijk: de app rekent vanaf het moment van de tip (DonateWav
 Versie 3.18: de overlay laat een tip iets later zien dan het moment van de tip (ontvangen + animatie en
 geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later laten beginnen dan de tip" op de
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
+FESTIVAL-STIJL (versie 3.35) – in de rustige shows, voor alle sounds.
+De drop valt nu precies op de eerste kick van de drop (gemeten uit de audio): op dat moment een korte witte flits en
+daarna staat de hele strip in één klap in een nieuwe kleur, altijd anders dan de opbouw ervoor. In de drop wisselt
+het de hele tijd: hele strip in de hoofdkleur → segmenten → hele strip in de tweede kleur → segmenten, elke maat
+een ander segmentpatroon (scanner, stapelen, om-en-om, sparkles). In normale stukken begint elke maat met de hele
+strip in één kleur. Flitsen: 80 ms wit op de kicks in de drop, gemeten nooit meer dan 2 per seconde (veilige grens
+is minder dan 3). Uitzetten kan in Device Manager › "Festival-flitsen (drop en kicks)".
+Een rookmachine kan de app niet aansturen (Govee heeft die niet).
+
 LIJPE SHOWS OP DE BEAT (versie 3.34) – geldt voor alle sounds met "Rustige shows" aan.
 Elke tik staat op een echte kick uit het nummer (gemeten, niet geschat). Voor elke drop bouwt de strip op: de zones
 11 t/m 20 lopen één voor één vol en worden feller, en op de drop slaat het hele zichtbare stuk in één klap om naar

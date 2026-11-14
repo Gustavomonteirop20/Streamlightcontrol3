@@ -240,6 +240,9 @@
                                 <CheckBox Style="{StaticResource Switch}" Content="Rustige shows (minder knipperen)" Margin="0,12,0,0"
                                           IsChecked="{Binding DataContext.Settings.Lighting.CalmShows, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                           ToolTip="Zoals in je voorbeeldfilmpje: per stuk van het nummer één kleur, geen witte flitsen; de zichtbare zones bewegen op elke beat (onder de 3 wissels per seconde). De zichtbare zones bewegen op de beat (om-en-om, vullen, looplicht, vanuit het midden, ademen); de rest van de strip is een rustige gloed. Uit = de felle festival-shows."/>
+                                <CheckBox Style="{StaticResource Switch}" Content="Festival-flitsen (drop en kicks)" Margin="0,8,0,0"
+                                          IsChecked="{Binding DataContext.Settings.Lighting.CalmFlashes, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          ToolTip="Bij de rustige shows: precies op de drop een korte witte flits en daarna de hele strip in de nieuwe kleur; in de drop flitst het op de kicks. Altijd minder dan 3 flitsen per seconde. Uit = geen flitsen."/>
                                 <CheckBox Style="{StaticResource Switch}" Content="Effecten op de zichtbare zones" Margin="0,8,0,0"
                                           IsChecked="{Binding DataContext.Settings.Lighting.ZoneEffects, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                           ToolTip="De zichtbare stukjes krijgen beams om-en-om, een scanner, licht vanuit het midden en washes in magenta/rood/paars; de rest van de strip houdt de showkleur. Op de kicks gaat alles wit. Gezellige shows krijgen een zacht kleurverloop."/>

@@ -224,6 +224,21 @@ public sealed class LightShowEngine
                     var color = Scale(f.Color, master);
                     var frame = f with { Color = color, Accent = f.Accent == default ? default : Scale(f.Accent, master) };
                     var rendered = ips.ToDictionary(ip => ip, ip => ZonesFor(ip, opt) is { } zz ? CalmShow.Render(zz, frame, cozy) : null);
+                    if (f.FlashMs > 0 && opt.CalmFlashes && !cozy)
+                    {
+                        // Festival-flits: precies op de beat de hele strip kort wit, daarna het beeld
+                        var white = Scale((255, 255, 255), master);
+                        await HoldPrecise(clock, at, margin, token);
+                        Frame?.Invoke(new LightFrame(show.Id, show.Name, 0, rep, ColorUtil.ToHex(white.r, white.g, white.b), 100, true,
+                            Math.Min(1, (f.AtMs + rep * (long)total) / (double)(total * Math.Max(1, show.Repeats)))));
+                        await ForAll(ips, async ip =>
+                        {
+                            var z = ZonesFor(ip, opt);
+                            if (z != null) await SendZonesAsync(ip, z, Enumerable.Repeat(white, z.Count).ToList(), white, token);
+                            else { lastBase[ip] = white; await SetColor(ip, white, token); }
+                        });
+                        at += f.FlashMs;
+                    }
                     await HoldPrecise(clock, at, margin, token);
                     Frame?.Invoke(new LightFrame(show.Id, show.Name, 0, rep, ColorUtil.ToHex(color.r, color.g, color.b), 100, true,
                         Math.Min(1, (f.AtMs + rep * (long)total) / (double)(total * Math.Max(1, show.Repeats)))));

@@ -7,7 +7,8 @@ namespace StreamLightControl2.Core.Services;
 /// <param name="Impact">Eerste beat van een drop: de hele strip één beat vol aan.</param>
 /// <param name="Build">Opbouw naar een drop: de zones vullen en worden feller tot de drop.</param>
 public sealed record CalmFrame(long AtMs, int DurationMs, (byte r, byte g, byte b) Color, int Pattern, int Tick, bool SectionStart,
-    int TicksInSection = 1, (byte r, byte g, byte b) Accent = default, int Energy = 1, bool Impact = false, bool Build = false, bool OnKick = false);
+    int TicksInSection = 1, (byte r, byte g, byte b) Accent = default, int Energy = 1, bool Impact = false, bool Build = false, bool OnKick = false,
+    int FlashMs = 0);
 
 /// <summary>
 /// Lichtshow zonder geknipper, opgebouwd als een echte show: rustige stukken ademen en vullen langzaam (om de 2 beats),
@@ -19,7 +20,10 @@ public sealed record CalmFrame(long AtMs, int DurationMs, (byte r, byte g, byte 
 /// </summary>
 public static class CalmShow
 {
-    public const int Patterns = 11;
+    public const int Patterns = 13;
+    public const int FullA = 11;             // hele strip één kleur (hoofdkleur)
+    public const int FullB = 12;             // hele strip één kleur (accent)
+    public const int FlashMs = 80;           // korte witte flits vóór het beeld
     public const int MinTickMs = 360;        // elke beat tot ±165 BPM; nooit 3 of meer wissels per seconde
     public const int CozyMinTickMs = 850;
     public const int SectionMs = 3500;
@@ -80,6 +84,24 @@ public static class CalmShow
             if (ticks[i] - secStart >= SectionMs && total - ticks[i] >= 1500) { sections.Add((secStart, ticks[i])); secStart = ticks[i]; }
         sections.Add((secStart, total));
 
+        // 3b. Drops precies op de beat: de sectiegrens schuift naar de eerste kick waarna het dicht op elkaar gaat
+        //     (minstens 3 kicks binnen 2 s) na een stiller stuk; die kick wordt de drop
+        if (!cozy && song != null && kicks.Count > 0)
+        {
+            var tickSet = new HashSet<long>(ticks);
+            for (var s = 1; s < sections.Count; s++)
+            {
+                double Rate(long from, long to) => kicks.Count(k => k >= from && k < to) / Math.Max(0.5, (to - from) / 1000.0);
+                if (Rate(sections[s].start, sections[s].end) < 1.4 || Rate(sections[s - 1].start, sections[s - 1].end) >= 1.4) continue;
+                var lo = sections[s - 1].start + 1000; var hi = Math.Min(sections[s].end - 1500, sections[s].start + 2500);
+                var drop = kicks.Where(k => k >= lo && k <= hi && tickSet.Contains(k))
+                    .FirstOrDefault(k => kicks.Count(x => x >= k && x < k + 2000) >= 3 && kicks.Count(x => x >= k - 2000 && x < k) <= 2, -1);
+                if (drop < 0 || drop == sections[s].start) continue;
+                sections[s - 1] = (sections[s - 1].start, drop);
+                sections[s] = (drop, sections[s].end);
+            }
+        }
+
         // 4. Energie per sectie: kicks per seconde in de festival-versie
         var energy = sections.Select(s =>
         {
@@ -101,11 +123,14 @@ public static class CalmShow
             var (a, b) = sections[s];
             var e = energy[s];
             var color = Dominant(show, a, b, prev) ?? prev ?? (180, 60, 255);
-            prev = color;
             var accent = Accent(show, a, b, color);
             var isBuild = !cozy && e < 2 && s + 1 < sections.Count && energy[s + 1] == 2;
             var impact = !cozy && e == 2 && s > 0 && energy[s - 1] < 2;
-            var pattern = cozy ? new[] { 1, 4 }[s % 2] : isBuild ? BuildPattern : orders[e][used[e]++ % orders[e].Length];
+            // Drop: altijd duidelijk een ander licht dan de opbouw ervoor
+            if (impact && s > 0 && frames.Count > 0 && HueDist(Hue(color), Hue(frames[^1].Color)) < 60)
+                (color, accent) = (accent, color);
+            prev = color;
+            var basePattern = cozy ? new[] { 1, 4 }[s % 2] : isBuild ? BuildPattern : orders[e][used[e]++ % orders[e].Length];
             var secTicks = ticks.Where(x => x >= a && x < b).ToList();
             if (secTicks.Count == 0 || secTicks[0] != a) secTicks.Insert(0, a);
             // Rustige stukken: om de 2 beats (contrast met de drop)
@@ -113,8 +138,27 @@ public static class CalmShow
             for (var k = 0; k < secTicks.Count; k++)
             {
                 var end = k + 1 < secTicks.Count ? secTicks[k + 1] : b;
+                var onKick = kickSet.Contains(secTicks[k]);
+                var pattern = basePattern;
+                var flash = 0;
+                if (!cozy && !isBuild && e == 2)
+                {
+                    // Drop: per maat van 4 tikken hele strip hoofdkleur → segmenten → hele strip accent → segmenten,
+                    // en elke maat een ander segmentpatroon
+                    var bar = k / 4;
+                    pattern = (k % 4) switch { 0 => FullA, 2 => FullB, _ => orders[2][(used[2] + bar) % orders[2].Length] };
+                    if (k % 2 == 0 && (onKick || k == 0)) flash = FlashMs;
+                }
+                else if (!cozy && !isBuild && e == 1)
+                {
+                    // Normaal stuk: elke maat begint met de hele strip in één kleur, daarna segmenten
+                    var bar = k / 4;
+                    pattern = k % 4 == 0 ? (bar % 2 == 0 ? FullA : FullB) : orders[1][(used[1] + bar) % orders[1].Length];
+                    if (k == 0 && onKick) flash = FlashMs;
+                }
+                if (impact && k == 0) { pattern = FullA; flash = FlashMs; }
                 frames.Add(new CalmFrame(secTicks[k], (int)Math.Max(1, end - secTicks[k]), color, pattern, k, k == 0, secTicks.Count,
-                    accent, e, impact && k == 0, isBuild, kickSet.Contains(secTicks[k])));
+                    accent, e, impact && k == 0, isBuild, onKick, flash));
             }
         }
         return frames;
@@ -167,6 +211,8 @@ public static class CalmShow
         var T = Math.Max(1, f.TicksInSection);
         var prog = T <= 1 ? 1.0 : k / (double)(T - 1);
         double glowF = cozy ? 0.55 : f.Impact ? 1.0 : f.Build ? 0.2 + 0.3 * prog : f.Energy switch { 0 => 0.22, 1 => 0.32, _ => 0.5 };
+        if (f.Pattern == FullA || f.Impact) return Enumerable.Repeat(A, z.Count).ToList();   // hele strip één kleur
+        if (f.Pattern == FullB) return Enumerable.Repeat(B, z.Count).ToList();
         var zones = Enumerable.Repeat(Scale(A, glowF), z.Count).ToList();
         var vis = z.Visible.Where(v => v >= 1 && v <= z.Count).ToList();
         var n = vis.Count;
@@ -206,6 +252,15 @@ public static class CalmShow
             zones[vis[i] - 1] = c;
         }
         return zones;
+    }
+
+    /// <summary>Meeste flitsen binnen één seconde (veiligheidsgrens: minder dan 3).</summary>
+    public static int MaxFlashesPerSecond(IReadOnlyList<CalmFrame> frames)
+    {
+        var at = frames.Where(f => f.FlashMs > 0).Select(f => f.AtMs).ToList();
+        var max = 0;
+        for (var i = 0; i < at.Count; i++) max = Math.Max(max, at.Skip(i).TakeWhile(x => x - at[i] < 1000).Count());
+        return max;
     }
 
     /// <summary>Wissels per seconde.</summary>
