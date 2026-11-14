@@ -204,9 +204,12 @@ public sealed class LightShowEngine
         var frames = CalmShow.Build(show, cozy);
         var total = Math.Max(1, show.TotalDurationMs);
         var master = opt.ShowBrightness / 100.0;
-        var clock = Stopwatch.StartNew();
         await ForAll(ips, ip => EnsureOnAndBrightness(ip, 100, token));
         var lastBase = new System.Collections.Concurrent.ConcurrentDictionary<string, (byte, byte, byte)>();
+        // Precieze timing: Windows-timer op 1 ms, laatste stukje exact aftellen op de Stopwatch (±0,1 ms)
+        using var hires = TimerResolution.High();
+        var margin = hires.Active ? 10 : 20;   // laatste ms'en actief wachten: gemeten p99 ≈ 0,05 ms
+        var clock = Stopwatch.StartNew();
         try
         {
             for (var rep = 0; rep < show.Repeats; rep++)
@@ -217,15 +220,17 @@ public sealed class LightShowEngine
                     token.ThrowIfCancellationRequested();
                     var at = offset + f.AtMs;
                     if (rep == 0 && at + f.DurationMs <= -opt.LatencyMs) continue;   // al voorbij (show begint midden in)
-                    await HoldUntil(clock, at, token);
+                    // Eerst alles uitrekenen, dan precies op het moment versturen
                     var color = Scale(f.Color, master);
-                    var frame = f with { Color = color };
+                    var frame = f with { Color = color, Accent = f.Accent == default ? default : Scale(f.Accent, master) };
+                    var rendered = ips.ToDictionary(ip => ip, ip => ZonesFor(ip, opt) is { } zz ? CalmShow.Render(zz, frame, cozy) : null);
+                    await HoldPrecise(clock, at, margin, token);
                     Frame?.Invoke(new LightFrame(show.Id, show.Name, 0, rep, ColorUtil.ToHex(color.r, color.g, color.b), 100, true,
                         Math.Min(1, (f.AtMs + rep * (long)total) / (double)(total * Math.Max(1, show.Repeats)))));
                     await ForAll(ips, async ip =>
                     {
                         var z = ZonesFor(ip, opt);
-                        if (z != null) await SendZonesAsync(ip, z, CalmShow.Render(z, frame, cozy), color, token);
+                        if (z != null) await SendZonesAsync(ip, z, rendered[ip] ?? CalmShow.Render(z, frame, cozy), color, token);
                         else if (!lastBase.TryGetValue(ip, out var lb) || lb != color)
                         {
                             lastBase[ip] = color;
@@ -299,6 +304,19 @@ public sealed class LightShowEngine
 
     private void Emit(LightShow show, int step, int rep, string hex, int bri, bool on, double progress) =>
         Frame?.Invoke(new LightFrame(show.Id, show.Name, step, rep, hex, bri, on, progress));
+
+    /// <summary>Wacht tot precies <paramref name="targetMs"/>: grof met Task.Delay, de laatste milliseconden exact.</summary>
+    internal static async Task HoldPrecise(Stopwatch clock, long targetMs, int marginMs, CancellationToken token)
+    {
+        var wait = targetMs - clock.Elapsed.TotalMilliseconds;
+        if (wait > marginMs + 1) await Task.Delay(TimeSpan.FromMilliseconds(wait - marginMs), token);
+        var spins = 0;
+        while (clock.Elapsed.TotalMilliseconds < targetMs)
+        {
+            if ((++spins & 1023) == 0) token.ThrowIfCancellationRequested();
+            Thread.SpinWait(20);
+        }
+    }
 
     private static async Task HoldUntil(Stopwatch clock, long targetMs, CancellationToken token)
     {

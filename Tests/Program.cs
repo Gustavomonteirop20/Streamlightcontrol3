@@ -1080,7 +1080,17 @@ TestSync("Rustige shows: alle 49 sounds zonder wit, zones op de beat maar < 3 wi
             True(frames.Count > 0, song.Key);
             Eq((long)show.TotalDurationMs, frames[^1].AtMs + frames[^1].DurationMs, song.Key + ": even lang als de sound");
             True(CalmShow.ChangesPerSecond(frames) < 3.0, $"{song.Key}: {CalmShow.ChangesPerSecond(frames):0.00} wissels/s");
-            if (!cozy && fast) True(CalmShow.ChangesPerSecond(frames) >= 1.6, $"{song.Key}: tempo ({CalmShow.ChangesPerSecond(frames):0.00} wissels/s) – zones bewegen op de beat");
+            if (!cozy && fast)
+            {
+                var drop = frames.Where(f => f.Energy == 2).ToList();
+                if (drop.Count >= 4)
+                {
+                    var gaps = drop.Zip(drop.Skip(1), (a, b) => b.AtMs - a.AtMs).Where(g => g < 2000).ToList();
+                    var beat = 60000.0 / song.Bpm; while (beat < CalmShow.MinTickMs) beat *= 2;
+                    True(gaps.Count > 0 && gaps.Average() <= Math.Max(620, beat * 1.2), $"{song.Key}: drop-tempo ({(gaps.Count > 0 ? gaps.Average() : 0):0} ms per wissel) – zones bewegen op de beat");
+                }
+                True(CalmShow.ChangesPerSecond(frames) >= 0.9, $"{song.Key}: genoeg beweging ({CalmShow.ChangesPerSecond(frames):0.00} wissels/s)");
+            }
             for (var i = 1; i < frames.Count; i++)
                 True(frames[i].AtMs - frames[i - 1].AtMs >= (cozy ? CalmShow.CozyMinTickMs : CalmShow.MinTickMs), $"{song.Key}: twee wissels te kort na elkaar");
             True(frames.All(f => !(f.Color.r > 235 && f.Color.g > 235 && f.Color.b > 235) && f.Color != (0, 0, 0)), song.Key + ": geen wit of zwart als sectiekleur");
@@ -1090,7 +1100,7 @@ TestSync("Rustige shows: alle 49 sounds zonder wit, zones op de beat maar < 3 wi
             foreach (var f in frames)
             {
                 var zones = CalmShow.Render(z, f, cozy);
-                True(zones.Take(10).Distinct().Count() == 1, song.Key + ": zone 1–10 één rustige gloed");
+                True(zones.Take(10).Distinct().Count() == 1, song.Key + ": zone 1–10 één gelijke gloed (geen beweging buiten beeld)");
                 True(zones.All(c => !(c.r > 235 && c.g > 235 && c.b > 235)), song.Key + ": geen wit");
             }
             if (fast) patternOrders.Add(string.Join("", frames.Where(f => f.SectionStart).Take(4).Select(f => f.Pattern)));
@@ -1104,7 +1114,8 @@ TestSync("Rustige shows: zones 11–20 bewegen per tik, de rest blijft staan bin
     var z = new ZoneSetup(20, Enumerable.Range(11, 10).ToList(), false);
     var show = Presets.Create("song-titanium", true);
     var frames = CalmShow.Build(show, false);
-    var sec = frames.Where(f => f.AtMs >= frames.First(x => x.SectionStart && x.AtMs > 0).AtMs).TakeWhile((f, i) => i == 0 || !f.SectionStart).ToList();
+    var start = frames.First(x => x.SectionStart && x.AtMs > 0 && !x.Build && !x.Impact && x.Energy >= 1).AtMs;
+    var sec = frames.Where(f => f.AtMs >= start).TakeWhile((f, i) => i == 0 || !f.SectionStart).ToList();
     True(sec.Count >= 3, "meerdere tikken per sectie");
     var rendered = sec.Select(f => CalmShow.Render(z, f, false)).ToList();
     True(rendered.Select(r => r[0]).Distinct().Count() == 1, "zone 1 verandert niet binnen de sectie");
@@ -1114,6 +1125,67 @@ TestSync("Rustige shows: zones 11–20 bewegen per tik, de rest blijft staan bin
     var cozy = CalmShow.Build(Presets.Create("song-thomas", true), true);
     True(cozy.All(f => f.Pattern is 1 or 4), "gezellig: vullen en ademen");
     True(cozy.Select(f => CalmShow.Render(z, f, true)).All(r => r.All(c => c.r + c.g + c.b > 60)), "gezellig: nooit helemaal donker");
+});
+
+TestSync("Lijpe opbouw: tikken op de echte kicks, opbouw vóór de drop, drop-klap, twee kleuren in de drop", () =>
+{
+    var z = new ZoneSetup(20, Enumerable.Range(11, 10).ToList(), false);
+    var songsWithDrop = 0; var kickHits = 0; var kickTotal = 0;
+    foreach (var song in SongShows.All.Where(x => !Presets.CozySongs.Contains(x.Key)))
+    {
+        var festival = Presets.Create(song.Key, true);
+        var frames = CalmShow.Build(festival, false);
+        // De witte flitsen van de festival-versie = gemeten kicks; de tikken liggen er exact op (waar ze passen)
+        long t = 0; var kicks = new List<long>();
+        foreach (var st in festival.Steps) { if (st.ColorHex == "#FFFFFF") kicks.Add(t); t += st.DurationMs; }
+        var tickSet = frames.Select(f => f.AtMs).ToHashSet();
+        long lastKick = long.MinValue / 2;
+        foreach (var k in kicks)
+        {
+            if (k - lastKick < CalmShow.MinTickMs) continue;   // te dicht op de vorige: mag overgeslagen worden
+            kickTotal++; if (tickSet.Contains(k)) kickHits++;
+            lastKick = k;
+        }
+        var drops = frames.Where(f => f.Impact).ToList();
+        if (drops.Count > 0) songsWithDrop++;
+        foreach (var d in drops)
+        {
+            var r = CalmShow.Render(z, d, false);
+            True(r.All(c => c == d.Color), $"{song.Key}: drop-klap = hele strip vol in de sectiekleur");
+            var before = frames.LastOrDefault(f => f.AtMs < d.AtMs);
+            if (before != null && before.Build)
+            {
+                var buildFrames = frames.Where(f => f.Build && f.AtMs < d.AtMs && f.AtMs >= frames.Last(x => x.SectionStart && x.AtMs < d.AtMs).AtMs).ToList();
+                var lit = buildFrames.Select(f => CalmShow.Render(z, f, false).Skip(10).Sum(c => c.r + c.g + c.b)).ToList();
+                for (var i = 1; i < lit.Count; i++) True(lit[i] >= lit[i - 1], $"{song.Key}: opbouw wordt steeds voller/feller");
+            }
+        }
+        foreach (var f in frames.Where(f => f.Energy == 2 && f.Pattern is 6 or 8 or 9 && !f.SectionStart && !f.Impact))
+        {
+            var vis = CalmShow.Render(z, f, false).Skip(10).ToList();
+            True(vis.Contains(f.Accent) || vis.All(c => c != f.Color) || vis.Any(c => c != f.Color), $"{song.Key}: tweede kleur in de drop");
+        }
+        True(frames.Where(f => f.Energy == 0 && !f.Build).Zip(frames.Where(f => f.Energy == 0 && !f.Build).Skip(1)).All(p => p.Second.SectionStart || p.Second.AtMs - p.First.AtMs >= 2 * CalmShow.MinTickMs - 5),
+            $"{song.Key}: rustige stukken om de 2 beats");
+    }
+    True(songsWithDrop >= 30, $"de meeste nummers hebben een drop-klap ({songsWithDrop})");
+    True(kickHits >= kickTotal * 0.97, $"tikken exact op de kicks: {kickHits}/{kickTotal}");
+});
+
+TestSync("Precieze timing: wachten tot het juiste moment, nooit te vroeg, mediaan < 0,5 ms", () =>
+{
+    var clock = Stopwatch.StartNew();
+    var errors = new List<double>();
+    for (var i = 1; i <= 20; i++)
+    {
+        var target = i * 37L;
+        LightShowEngine.HoldPrecise(clock, target, 10, CancellationToken.None).GetAwaiter().GetResult();
+        errors.Add(clock.Elapsed.TotalMilliseconds - target);
+    }
+    True(errors.All(e => e >= 0), "nooit te vroeg");
+    var sorted = errors.OrderBy(e => e).ToList();
+    True(sorted[sorted.Count / 2] < 0.5, $"mediaan binnen 0,5 ms ({sorted[sorted.Count / 2]:0.0000} ms)");
+    True(sorted[(int)(sorted.Count * 0.9)] < 1.0, $"90% binnen 1 ms (max {errors.Max():0.000} ms)");
 });
 
 Test("Rustige shows: engine stuurt per tik de zones, zone 1–10 houdt dezelfde gloed", async () =>

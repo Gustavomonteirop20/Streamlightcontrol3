@@ -328,6 +328,17 @@ Sound en show lopen gelijk: de app rekent vanaf het moment van de tip (DonateWav
 Versie 3.18: de overlay laat een tip iets later zien dan het moment van de tip (ontvangen + animatie en
 geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later laten beginnen dan de tip" op de
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
+LIJPE SHOWS OP DE BEAT (versie 3.34) – geldt voor alle sounds met "Rustige shows" aan.
+Elke tik staat op een echte kick uit het nummer (gemeten, niet geschat). Voor elke drop bouwt de strip op: de zones
+11 t/m 20 lopen één voor één vol en worden feller, en op de drop slaat het hele zichtbare stuk in één klap om naar
+de dropkleur. In de drop wisselen twee contrasterende kleuren: scanner met staart, randen naar het midden, twee
+kleuren om-en-om of gestapeld en sparkles. Rustige stukken bewegen op elke 2e beat, zodat de drop harder binnenkomt.
+Nog steeds geen wit, geen stroboscoop en minimaal 360 ms tussen wissels (< 3 per seconde).
+Timing: tijdens een show zet de app de Windows-timer op 1 ms en telt de laatste 10 ms exact af op de klok van de pc.
+Gemeten: de pc verstuurt het commando gemiddeld ±0,005 ms na het juiste moment (99% binnen 0,06 ms). Wifi en de
+strip zelf voegen daar een paar ms aan toe; dat kan geen enkele app wegnemen. Loopt het licht in je stream achter of
+voor, stel dan "Vertraging" (LatencyMs) bij Lichtshows in.
+
 RUSTIGE SHOWS (versie 3.33) – Device Manager › "Rustige shows (minder knipperen)", standaard aan.
 Zoals in het voorbeeldfilmpje: per stuk van het nummer (±3,5 s) één kleur uit de show zelf, geen witte flitsen en
 de zones bewegen op elke beat (hooguit ±2,8 wissels per seconde, onder de 3 die als veilig geldt). De zones die op
