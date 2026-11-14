@@ -31,6 +31,8 @@
                                 ToolTip="Doet alsof Thomas de LIVE binnenkomt"/>
                         <Button Style="{StaticResource SmallButton}" Tag="&#xE77B;" Content="Diego komt binnen" Margin="0,0,16,6" CommandParameter="member:diego" Click="Simulate_Click"
                                 ToolTip="Doet alsof Diego de LIVE binnenkomt"/>
+                        <Button Style="{StaticResource SmallButton}" Tag="&#xE77B;" Content="Martin komt binnen" Margin="0,0,16,6" CommandParameter="member:martin" Click="Simulate_Click"
+                                ToolTip="Doet alsof Martin de LIVE binnenkomt (C4-sound)"/>
                         <TextBox x:Name="SimGiftName" ui:Hint.Text="Giftnaam (bijv. Rose)" Width="170" MinHeight="30" Margin="0,0,6,6"/>
                         <TextBox x:Name="SimCoins" ui:Hint.Text="Coins" Text="100" Width="80" MinHeight="30" Margin="0,0,6,6"/>
                         <Button Style="{StaticResource SmallButton}" Tag="&#xE734;" Content="Gift" Margin="0,0,6,6" CommandParameter="gift" Click="Simulate_Click"/>

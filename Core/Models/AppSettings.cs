@@ -305,7 +305,7 @@ public sealed class OverlayOptions : ObservableObject
 
 public sealed class AppSettings
 {
-    public int Version { get; set; } = 30;
+    public int Version { get; set; } = 31;
     public BetterTokOptions BetterTok { get; set; } = new();
     public ObservableCollection<GoveeDeviceConfig> Devices { get; set; } = new();
     public ObservableCollection<LightShow> Shows { get; set; } = new();

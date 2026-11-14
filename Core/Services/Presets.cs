@@ -157,21 +157,22 @@ public static class Presets
         foreach (var t in EntranceRules()) yield return t;
     }
 
-    /// <summary>Binnenkomst-sounds in BetterTok: (sleutel, TikTok-naam, weergavenaam, duur van de sound in ms).</summary>
-    public static readonly (string Id, string User, string Name, int SoundMs)[] Entrances =
+    /// <summary>Binnenkomst-sounds in BetterTok: (sleutel, TikTok-naam, weergavenaam, duur van de sound in ms, song-show).</summary>
+    public static readonly (string Id, string User, string Name, int SoundMs, string Song)[] Entrances =
     {
-        ("thomas", "thomas", "Thomas", 28440),
-        ("diego", "diego", "Diego", 31974),
+        ("thomas", "thomas", "Thomas", 28440, "song-thomas"),
+        ("diego", "diego", "Diego", 31974, "song-diego"),
+        ("martin", "martin", "Martin", 42841, "song-c4"),   // zelfde sound als de dono "Hoe detonate ik zo een C4"
     };
 
     /// <summary>Als deze kijker de LIVE binnenkomt speelt zijn eigen ♪-show (op zijn binnenkomst-sound in BetterTok).</summary>
     public static IEnumerable<EventTrigger> EntranceRules()
     {
-        foreach (var (id, user, name, soundMs) in Entrances)
+        foreach (var (id, user, name, soundMs, song) in Entrances)
             yield return new EventTrigger
             {
                 Id = "te-" + id, Name = $"♪ Binnenkomst {name}", EventType = EventTypes.Member, MatchText = user,
-                ShowId = "preset-song-" + id, Priority = Priorities.VeryHigh, InterruptCurrent = false,
+                ShowId = "preset-" + song, Priority = Priorities.VeryHigh, InterruptCurrent = false,
                 CooldownSeconds = 60, MaxInQueue = 1, SoundDurationMs = soundMs
             };
     }

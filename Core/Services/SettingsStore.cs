@@ -400,7 +400,15 @@ public sealed class SettingsStore : IDisposable
             s.Version = 30;
             changed = true;
         }
-        if (changed && s.Version < 30) s.Version = 30;
+        if (startVersion < 31)
+        {
+            // Versie 31: binnenkomst-show voor Martin (C4-sound)
+            foreach (var t in Presets.EntranceRules())
+                if (s.Triggers.All(x => x.Id != t.Id)) s.Triggers.Add(t);
+            s.Version = 31;
+            changed = true;
+        }
+        if (changed && s.Version < 31) s.Version = 31;
         return changed;
     }
 

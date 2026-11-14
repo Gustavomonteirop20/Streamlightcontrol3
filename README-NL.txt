@@ -328,6 +328,12 @@ Sound en show lopen gelijk: de app rekent vanaf het moment van de tip (DonateWav
 Versie 3.18: de overlay laat een tip iets later zien dan het moment van de tip (ontvangen + animatie en
 geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later laten beginnen dan de tip" op de
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
+BINNENKOMST MARTIN (versie 3.36) – Event Manager › "♪ Binnenkomst Martin".
+Komt Martin de LIVE binnen, dan speelt de show van de C4-sound ("Hoe detonate ik zo een C4"): dezelfde sound als de
+dono, dus de show staat al precies op de beat (42,8 s, met opbouw, drop-flits en hele strip ↔ segmenten). Zet in
+BetterTok bij Martins binnenkomst deze sound. Heet hij op TikTok anders dan "martin"? Pas dan in de regel het veld
+met de naam aan (meerdere namen met een komma). Testen: knop "Martin komt binnen".
+
 FESTIVAL-STIJL (versie 3.35) – in de rustige shows, voor alle sounds.
 De drop valt nu precies op de eerste kick van de drop (gemeten uit de audio): op dat moment een korte witte flits en
 daarna staat de hele strip in één klap in een nieuwe kleur, altijd anders dan de opbouw ervoor. In de drop wisselt
