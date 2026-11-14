@@ -387,7 +387,20 @@ public sealed class SettingsStore : IDisposable
             s.Version = 29;
             changed = true;
         }
-        if (changed && s.Version < 29) s.Version = 29;
+        if (startVersion < 30)
+        {
+            // Versie 30: rustige shows (minder knipperen) en de zichtbare Direct-zones 11 t/m 20
+            s.Lighting.CalmShows = true;
+            foreach (var d in s.Devices.Where(d => d.Enabled && (d.VisibleZones is "" or "9-16")))
+            {
+                d.VisibleZones = "11-20";
+                d.ZoneMethod = "direct";
+                d.ZoneCount = 20;
+            }
+            s.Version = 30;
+            changed = true;
+        }
+        if (changed && s.Version < 30) s.Version = 30;
         return changed;
     }
 
@@ -441,6 +454,7 @@ public sealed class SettingsStore : IDisposable
             foreach (var t in Presets.DefaultTriggers()) s.Triggers.Add(t);
         s.Updates ??= new UpdateOptions();
         if (string.IsNullOrWhiteSpace(s.Updates.Repo)) s.Updates.Repo = UpdateService.DefaultRepo;
+        if (isFresh) s.Lighting.CalmShows = true;   // standaard rustige shows (minder knipperen)
         s.Dashboard.VisibleStats ??= new();
         if (s.Dashboard.VisibleStats.Count == 0) s.Dashboard.VisibleStats.AddRange(new[] { "follows", "gifts", "coins", "shows" });
     }

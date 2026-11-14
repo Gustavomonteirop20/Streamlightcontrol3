@@ -42,6 +42,7 @@ public sealed class LightShowEngine
     {
         if (show.Steps.Count == 0) return;
         var opt = _options();
+        if (opt.CalmShows) { await PlayCalmAsync(show, ips, token, startOffsetMs, opt); return; }
         _govee.CommandDelayMs = opt.EffectiveCommandDelayMs;
         // De lamp kan intussen via de Govee-app zijn veranderd: begin elke show met een schone lei.
         ForgetState();
@@ -183,6 +184,56 @@ public sealed class LightShowEngine
                     }
                     firstColor = false;
                 }
+            }
+        }
+        finally
+        {
+            Finished?.Invoke(show.Id);
+        }
+    }
+
+    /// <summary>
+    /// Rustige show (minder knipperen): per sectie één kleur, de zichtbare zones bewegen op de beat,
+    /// de rest van de strip is een rustige gloed. Zonder zones: alleen per sectie een kleurwissel.
+    /// </summary>
+    private async Task PlayCalmAsync(LightShow show, IReadOnlyList<string> ips, CancellationToken token, int startOffsetMs, LightingOptions opt)
+    {
+        _govee.CommandDelayMs = opt.EffectiveCommandDelayMs;
+        ForgetState();
+        var cozy = Presets.CozySongs.Contains(show.PresetKey);
+        var frames = CalmShow.Build(show, cozy);
+        var total = Math.Max(1, show.TotalDurationMs);
+        var master = opt.ShowBrightness / 100.0;
+        var clock = Stopwatch.StartNew();
+        await ForAll(ips, ip => EnsureOnAndBrightness(ip, 100, token));
+        var lastBase = new System.Collections.Concurrent.ConcurrentDictionary<string, (byte, byte, byte)>();
+        try
+        {
+            for (var rep = 0; rep < show.Repeats; rep++)
+            {
+                long offset = (long)rep * total - opt.LatencyMs - Math.Max(0, startOffsetMs);
+                foreach (var f in frames)
+                {
+                    token.ThrowIfCancellationRequested();
+                    var at = offset + f.AtMs;
+                    if (rep == 0 && at + f.DurationMs <= -opt.LatencyMs) continue;   // al voorbij (show begint midden in)
+                    await HoldUntil(clock, at, token);
+                    var color = Scale(f.Color, master);
+                    var frame = f with { Color = color };
+                    Frame?.Invoke(new LightFrame(show.Id, show.Name, 0, rep, ColorUtil.ToHex(color.r, color.g, color.b), 100, true,
+                        Math.Min(1, (f.AtMs + rep * (long)total) / (double)(total * Math.Max(1, show.Repeats)))));
+                    await ForAll(ips, async ip =>
+                    {
+                        var z = ZonesFor(ip, opt);
+                        if (z != null) await SendZonesAsync(ip, z, CalmShow.Render(z, frame, cozy), color, token);
+                        else if (!lastBase.TryGetValue(ip, out var lb) || lb != color)
+                        {
+                            lastBase[ip] = color;
+                            await SetColor(ip, color, token);
+                        }
+                    });
+                }
+                await HoldUntil(clock, offset + total, token);
             }
         }
         finally

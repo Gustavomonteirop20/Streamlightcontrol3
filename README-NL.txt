@@ -328,6 +328,14 @@ Sound en show lopen gelijk: de app rekent vanaf het moment van de tip (DonateWav
 Versie 3.18: de overlay laat een tip iets later zien dan het moment van de tip (ontvangen + animatie en
 geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later laten beginnen dan de tip" op de
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
+RUSTIGE SHOWS (versie 3.33) – Device Manager › "Rustige shows (minder knipperen)", standaard aan.
+Zoals in het voorbeeldfilmpje: per stuk van het nummer (±3,5 s) één kleur uit de show zelf, geen witte flitsen en
+hooguit ±1,5 wissels per seconde (ruim onder de 3 per seconde die als veilig geldt voor kijkers). De zones die op
+stream te zien zijn (bij jou Direct-zones 11 t/m 20, al ingevuld) bewegen op de beat: om-en-om, vullen, een looplicht,
+vanuit het midden, ademen of willekeurig; elke show een eigen volgorde. De rest van de strip is een rustige gloed in
+dezelfde kleur. Gezellige shows (Thomas) vullen en ademen alleen, en worden nooit donker.
+Zet de schakelaar uit voor de felle festival-shows van vroeger.
+
 ZONE-EFFECTEN (versie 3.32) – Device Manager › "Zones op stream".
 De stukjes strip die op stream te zien zijn (bij jou segmenten 9 t/m 16, al ingevuld) krijgen tijdens shows
 festival-effecten zoals in een hardstyle-tent: beams om-en-om, een scanner die over het stuk loopt, licht vanuit het

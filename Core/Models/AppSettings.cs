@@ -143,6 +143,10 @@ public sealed class LightingOptions : ObservableObject
     private bool _zoneEffects = true;
     /// <summary>Festival-effecten op de stukjes strip die op stream te zien zijn (Device Manager › Zones op stream).</summary>
     public bool ZoneEffects { get => _zoneEffects; set => Set(ref _zoneEffects, value); }
+    private bool _calmShows;   // nieuwe installaties en versie 30 zetten dit aan
+    /// <summary>Rustige shows: per sectie één kleur, geen witte flitsen, hooguit ±1,5 wissels per seconde;
+    /// de zichtbare zones bewegen op de beat (zoals in het voorbeeldfilmpje).</summary>
+    public bool CalmShows { get => _calmShows; set => Set(ref _calmShows, value); }
 }
 
 public sealed class FollowOptions : ObservableObject
@@ -297,7 +301,7 @@ public sealed class OverlayOptions : ObservableObject
 
 public sealed class AppSettings
 {
-    public int Version { get; set; } = 29;
+    public int Version { get; set; } = 30;
     public BetterTokOptions BetterTok { get; set; } = new();
     public ObservableCollection<GoveeDeviceConfig> Devices { get; set; } = new();
     public ObservableCollection<LightShow> Shows { get; set; } = new();

@@ -237,7 +237,10 @@
                                 <TextBox Text="{Binding VisibleZones, UpdateSourceTrigger=LostFocus}" ui:Hint.Text="bijv. 1-3, 18-20"/>
                                 <Button Style="{StaticResource SecondaryButton}" Content="Laat alleen deze zones oplichten" Margin="0,8,0,0" HorizontalAlignment="Stretch" Click="ZonesShowVisible_Click"
                                         ToolTip="Controle: de zones die je invulde worden 5 seconden warm geel, de rest gaat uit."/>
-                                <CheckBox Style="{StaticResource Switch}" Content="Festival-effecten op deze zones tijdens shows" Margin="0,12,0,0"
+                                <CheckBox Style="{StaticResource Switch}" Content="Rustige shows (minder knipperen)" Margin="0,12,0,0"
+                                          IsChecked="{Binding DataContext.Settings.Lighting.CalmShows, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          ToolTip="Zoals in je voorbeeldfilmpje: per stuk van het nummer één kleur, geen witte flitsen, hooguit ±1,5 wissels per seconde. De zichtbare zones bewegen op de beat (om-en-om, vullen, looplicht, vanuit het midden, ademen); de rest van de strip is een rustige gloed. Uit = de felle festival-shows."/>
+                                <CheckBox Style="{StaticResource Switch}" Content="Effecten op de zichtbare zones" Margin="0,8,0,0"
                                           IsChecked="{Binding DataContext.Settings.Lighting.ZoneEffects, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                           ToolTip="De zichtbare stukjes krijgen beams om-en-om, een scanner, licht vanuit het midden en washes in magenta/rood/paars; de rest van de strip houdt de showkleur. Op de kicks gaat alles wit. Gezellige shows krijgen een zacht kleurverloop."/>
                             </StackPanel>
