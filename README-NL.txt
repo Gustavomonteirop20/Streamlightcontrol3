@@ -328,6 +328,21 @@ Sound en show lopen gelijk: de app rekent vanaf het moment van de tip (DonateWav
 Versie 3.18: de overlay laat een tip iets later zien dan het moment van de tip (ontvangen + animatie en
 geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later laten beginnen dan de tip" op de
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
+KERST-TIKTOK-OVERLAYS (versie 3.37) – BetterTok-pagina › Kerst-overlays, onderdelen "TikTok · …".
+Eigen kerstversies van betaalde BetterTok-onderdelen, live bijgewerkt met elke gift, volger en sub die BetterTok
+doorgeeft (ook als de lampen uit staan):
+  TikTok · Giftalert            pop-up bij elke gift (naam, gift ×aantal, coins), nooit over elkaar heen
+  TikTok · Gift Gallery         "Cadeaus onder de boom": elke soort gift met aantal en wie er het meest stuurde
+  TikTok · Leaderboard          "Lijst van de Kerstman": top 5 gifters op coins
+  TikTok · Grootste gift        de duurste gift van deze stream
+  TikTok · Laatste volger/sub   laatste volger en laatste subscriber
+  TikTok · Alles                alles onder elkaar (staand)
+Elke gift krijgt een kerst-icoon op waarde: zuurstok (< 10 coins), cadeautje (< 100), kerstbal (< 1000),
+kerstboom (< 10.000), kerstster (10.000+). Grote gifts krijgen sneeuw en een gouden gloed.
+Begin elke stream met "Nieuwe stream: TikTok-overlays op 0". Kopieer de adressen net als bij de andere kerst-overlays
+("Kopieer voor TikTok" of "Kopieer voor OBS"). Zet in BetterTok hetzelfde onderdeel uit, anders zie je het dubbel;
+geluid/TTS van BetterTok kun je gewoon aan laten.
+
 BINNENKOMST MARTIN (versie 3.36) – Event Manager › "♪ Binnenkomst Martin".
 Komt Martin de LIVE binnen, dan speelt de show van de C4-sound ("Hoe detonate ik zo een C4"): dezelfde sound als de
 dono, dus de show staat al precies op de beat (42,8 s, met opbouw, drop-flits en hele strip ↔ segmenten). Zet in

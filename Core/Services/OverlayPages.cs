@@ -20,7 +20,7 @@ a{color:#FFD600}code{color:#C9D2EC;margin:0 8px}span{color:#AEB8D6;font-size:14p
 
     public static string Page(string view) => Template.Replace("__VIEW__", view);
 
-    private const string Snow = """<svg class="snow" aria-hidden="true" viewBox="0 0 400 22" preserveAspectRatio="none"><path d="M8 14 C12 4 28 4 40 9 C56 2 76 4 86 10 C104 2 126 5 136 10 C156 2 178 4 188 10 C208 2 230 5 240 10 C260 2 282 4 292 10 C312 2 334 5 344 10 C364 3 386 5 392 13 L392 18 C380 22 366 17 352 21 C336 16 322 22 308 19 C292 23 278 17 264 21 C248 16 234 22 220 19 C204 23 190 17 176 21 C160 16 146 22 132 19 C116 23 102 17 88 21 C72 16 58 22 44 19 C30 23 18 17 8 20 Z" fill="#F4F7FF"/></svg>""";
+    internal const string Snow = """<svg class="snow" aria-hidden="true" viewBox="0 0 400 22" preserveAspectRatio="none"><path d="M8 14 C12 4 28 4 40 9 C56 2 76 4 86 10 C104 2 126 5 136 10 C156 2 178 4 188 10 C208 2 230 5 240 10 C260 2 282 4 292 10 C312 2 334 5 344 10 C364 3 386 5 392 13 L392 18 C380 22 366 17 352 21 C336 16 322 22 308 19 C292 23 278 17 264 21 C248 16 234 22 220 19 C204 23 190 17 176 21 C160 16 146 22 132 19 C116 23 102 17 88 21 C72 16 58 22 44 19 C30 23 18 17 8 20 Z" fill="#F4F7FF"/></svg>""";
 
     private const string Gift = """<svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>""";
 

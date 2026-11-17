@@ -199,7 +199,7 @@
                         </Grid>
                         <TextBlock x:Name="OvStatus" Style="{StaticResource Caption}" Margin="22,6,0,0" TextWrapping="Wrap"/>
                         <TextBlock Style="{StaticResource Caption}" Margin="0,12,0,12" TextWrapping="Wrap"
-                                   Text="Eigen kerstversies van de DonateWave-onderdelen. Ze werken live bij met elke tip die via je sleutel binnenkomt. Zet een adres als browserbron in OBS of als linkbron in TikTok LIVE Studio (op deze pc). Zet in DonateWave › Overlaybouwer hetzelfde onderdeel uit, anders zie je het dubbel. De tipalert verschijnt tegelijk met die van DonateWave; laat de DonateWave-alert dus aan voor geluid, animatie en voorleesstem, of maak die alert onzichtbaar."/>
+                                   Text="Eigen kerstversies van de DonateWave-onderdelen en van BetterTok-onderdelen (TikTok · …: giftalert, Gift Gallery, leaderboard, grootste gift, laatste volger en sub). De DonateWave-onderdelen werken bij met elke tip via je sleutel, de TikTok-onderdelen met elke gift, volger en sub die BetterTok doorgeeft. Zet een adres als browserbron in OBS of als linkbron in TikTok LIVE Studio (op deze pc). Zet in DonateWave › Overlaybouwer hetzelfde onderdeel uit, anders zie je het dubbel. De tipalert verschijnt tegelijk met die van DonateWave; laat de DonateWave-alert dus aan voor geluid, animatie en voorleesstem, of maak die alert onzichtbaar."/>
                         <Border Background="{StaticResource ElevatedBrush}" CornerRadius="10" Padding="12,10" Margin="0,0,0,12">
                             <StackPanel>
                                 <TextBlock Text="TikTok LIVE Studio" FontWeight="SemiBold"/>
@@ -251,7 +251,17 @@
                                     Value="{Binding Settings.Overlays.AlertMs}" VerticalAlignment="Center"/>
                             <TextBlock Grid.Column="1" Text="{Binding Settings.Overlays.AlertMs, StringFormat={}{0} ms}" Margin="12,0,0,0" VerticalAlignment="Center" MinWidth="70"/>
                         </Grid>
-                        <CheckBox Style="{StaticResource Switch}" Content="Testtips meetellen in doel, ranking en lijsten" IsChecked="{Binding Settings.Overlays.CountTests}" Margin="0,14,0,0"/>
+                        <TextBlock Text="TikTok-giftalert in beeld" Style="{StaticResource FieldLabel}" Margin="0,12,0,0"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Slider Minimum="2000" Maximum="15000" SmallChange="500" LargeChange="1000" TickFrequency="500" IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.Overlays.TikTokAlertMs}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Settings.Overlays.TikTokAlertMs, StringFormat={}{0} ms}" Margin="12,0,0,0" VerticalAlignment="Center" MinWidth="70"/>
+                        </Grid>
+                        <CheckBox Style="{StaticResource Switch}" Content="Testtips en testgifts meetellen in doel, ranking en lijsten" IsChecked="{Binding Settings.Overlays.CountTests}" Margin="0,14,0,0"/>
                         <TextBlock Text="Poort" Style="{StaticResource FieldLabel}" Margin="0,12,0,0" ToolTip="Alleen veranderen als de overlays niet willen starten (poort al in gebruik)."/>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -263,6 +273,8 @@
                         <WrapPanel Margin="0,14,0,0">
                             <Button Style="{StaticResource GhostButton}" Content="Doel opnieuw vanaf € 0" Margin="0,0,8,8" Click="OvResetGoal_Click"/>
                             <Button Style="{StaticResource GhostButton}" Content="Alle bijgehouden tips wissen" Margin="0,0,8,8" Click="OvClear_Click"/>
+                            <Button Style="{StaticResource GhostButton}" Content="Nieuwe stream: TikTok-overlays op 0" Margin="0,0,8,8" Click="OvTikTokReset_Click"
+                                    ToolTip="Leaderboard, Gift Gallery, grootste gift en laatste volger/sub beginnen opnieuw"/>
                             <Button Style="{StaticResource GhostButton}" Content="Overzicht openen" Margin="0,0,8,8" Click="OvIndex_Click"/>
                         </WrapPanel>
                     </StackPanel>

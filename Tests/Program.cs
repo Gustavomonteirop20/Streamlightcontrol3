@@ -1608,6 +1608,85 @@ Test("Kerst-overlays: DonateWave-tip komt in de overlays, ook zonder lichtregel"
     app.Queue.StopAll();
 });
 
+TestSync("Kerst-TikTok-overlays: leaderboard, Gift Gallery, grootste gift, laatste volger/sub en giftalerts", () =>
+{
+    var dir = TempDir();
+    var t = new TikTokStats(dir);
+    var o = new OverlayOptions { TikTokAlertMs = 5000 };
+    StreamEvent G(string id, string user, string gift, int n, long per, bool streak = false, bool test = false, string display = "") => new()
+    { Type = EventTypes.Gift, RawType = "gift", DedupeKey = id, User = user, DisplayName = display, GiftName = gift, GiftCount = n, CoinsPerItem = per, TotalCoins = per * n, StreakInProgress = streak, IsTest = test };
+    True(t.Add(G("g0", "kees", "Rose", 3, 1, streak: true)) == null, "lopende combo telt nog niet");
+    t.Add(G("g1", "kees", "Rose", 5, 1, display: "Kees 🎅"));
+    t.Add(G("g2", "lies", "Galaxy", 1, 1000));
+    t.Add(G("g3", "@Kees", "Rose", 10, 1));
+    t.Add(G("g4", "piet", "Doughnut", 2, 30));
+    True(t.Add(G("g4", "piet", "Doughnut", 2, 30)) == null, "dubbel event telt niet");
+    t.Add(G("g5", "test", "Lion", 1, 29999, test: true));
+    t.Add(new StreamEvent { Type = EventTypes.Follow, DedupeKey = "f1", User = "anna", DisplayName = "Anna" });
+    t.Add(new StreamEvent { Type = EventTypes.Subscribe, DedupeKey = "s1", User = "bob" });
+    True(t.Add(new StreamEvent { Type = EventTypes.Like, DedupeKey = "l1", User = "x", LikeCount = 5 }) == null, "likes niet");
+    var j = System.Text.Json.JsonSerializer.SerializeToElement(t.Snapshot(o, DateTime.UtcNow));
+    var rk = j.GetProperty("ranking").EnumerateArray().ToList();
+    Eq(3, rk.Count, "test-gift telt niet mee in de ranking");
+    Eq("lies", rk[0].GetProperty("name").GetString());
+    Eq(1000, rk[0].GetProperty("coins").GetInt64());
+    Eq(60, rk[1].GetProperty("coins").GetInt64(), "Piet 2 × 30");
+    Eq(15, rk[2].GetProperty("coins").GetInt64(), "kees en @Kees samen: 5 + 10 rozen");
+    Eq("1.000 coins", rk[0].GetProperty("coinsText").GetString());
+    var gal = j.GetProperty("gallery").EnumerateArray().ToList();
+    Eq("Galaxy", gal[0].GetProperty("gift").GetString(), "duurste gift eerst");
+    var rose = gal.Single(x => x.GetProperty("gift").GetString() == "Rose");
+    Eq(15, rose.GetProperty("count").GetInt32(), "15 rozen");
+    Eq(1, rose.GetProperty("tier").GetInt32(), "roos = zuurstokje");
+    Eq(4, gal[0].GetProperty("tier").GetInt32(), "Galaxy (1000) = kerstboom");
+    Eq("lies", j.GetProperty("topGift").GetProperty("name").GetString(), "grootste gift: Galaxy van lies");
+    Eq("Kees 🎅", rk[2].GetProperty("name").GetString(), "weergavenaam");
+    Eq("Anna", j.GetProperty("lastFollower").GetProperty("name").GetString());
+    Eq("bob", j.GetProperty("lastSub").GetProperty("name").GetString());
+    var al = j.GetProperty("alerts").EnumerateArray().ToList();
+    Eq(5, al.Count, "alerts: elke gift (ook de test) – zo zie je bij testen dat het werkt");
+    for (var i = 1; i < al.Count; i++)
+        True(al[i].GetProperty("showAt").GetInt64() >= al[i - 1].GetProperty("showAt").GetInt64() + 5000, "alerts nooit over elkaar");
+    Eq(5, al.Last().GetProperty("tier").GetInt32(), "Lion = kerstster");
+    o.CountTests = true;
+    var j2 = System.Text.Json.JsonSerializer.SerializeToElement(t.Snapshot(o, DateTime.UtcNow));
+    Eq(29999, j2.GetProperty("topGift").GetProperty("coins").GetInt64(), "testgifts meetellen");
+    // Nieuwe stream
+    o.TikTokStartUtc = DateTime.UtcNow.AddSeconds(1);
+    var j3 = System.Text.Json.JsonSerializer.SerializeToElement(t.Snapshot(o, DateTime.UtcNow.AddSeconds(2)));
+    Eq(0, j3.GetProperty("ranking").GetArrayLength(), "nieuwe stream: leeg");
+    True(j3.GetProperty("lastFollower").ValueKind == System.Text.Json.JsonValueKind.Null, "nieuwe stream: geen volger");
+    Eq(t.Count, new TikTokStats(dir).Count, "bewaard in tiktok.json");
+});
+
+Test("Kerst-TikTok-overlays: pagina's en /api/tiktok, giften komen binnen ook als de lampen uit staan", async () =>
+{
+    var dir = TempDir();
+    using var app = new AutomationController(dir, NewGovee());
+    app.Initialize();
+    app.Settings.Overlays.Port = 7596; app.Overlays.Apply();
+    True(app.Overlays.IsRunning, app.Overlays.Status);
+    app.HandleEvent(new StreamEvent { Type = EventTypes.Gift, RawType = "gift", DedupeKey = "x1", User = "<img src=x onerror=alert(1)>", GiftName = "Rose", GiftCount = 1, CoinsPerItem = 1, TotalCoins = 1 });
+    app.HandleEvent(new StreamEvent { Type = EventTypes.Follow, RawType = "follow", DedupeKey = "x2", User = "anna" });
+    Eq(2, app.TikTok.Count);
+    using var http = new HttpClient(new HttpClientHandler { UseProxy = false });
+    var api = await http.GetStringAsync("http://127.0.0.1:7596/api/tiktok");
+    True(!api.Contains("<img"), "kijkersnaam als JSON-tekst, nooit als HTML");
+    True(api.Contains("anna"), "volger in de stand");
+    foreach (var v in OverlayServer.Views.Where(v => OverlayServer.IsTikTokView(v.Path)))
+    {
+        var html = await http.GetStringAsync(OverlayServer.ViewUrl(7596, v.Path));
+        True(html.Contains($"data-view=\"{v.Path}\"") && html.Contains("/api/tiktok"), v.Path);
+        True(!html.Contains("__"), "geen lege plaatshouders in " + v.Path);
+        True(!html.Contains("innerHTML"), "geen innerHTML in " + v.Path);
+    }
+    app.ResetTikTokStream();
+    var after = System.Text.Json.JsonSerializer.SerializeToElement(app.TikTok.Snapshot(app.Settings.Overlays, DateTime.UtcNow.AddSeconds(1)));
+    Eq(0, after.GetProperty("ranking").GetArrayLength(), "nieuwe stream");
+    app.Overlays.Stop();
+    app.Queue.StopAll();
+});
+
 Test("Follow: 2 follows na elkaar – licht voor de tweede pas als de sound van de eerste klaar is", async () =>
 {
     var dir = TempDir();

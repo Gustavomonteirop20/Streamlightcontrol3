@@ -167,6 +167,12 @@ ipconfig /flushdns | Out-Null
         Ui.Toast("Het doel telt opnieuw vanaf € 0");
     }
 
+    private void OvTikTokReset_Click(object sender, RoutedEventArgs e)
+    {
+        C.ResetTikTokStream();
+        Ui.Toast("TikTok-overlays beginnen opnieuw (nieuwe stream)");
+    }
+
     private void OvClear_Click(object sender, RoutedEventArgs e)
     {
         var r = MessageBox.Show(Window.GetWindow(this), "Alle bijgehouden tips wissen? Ranking, weekkampioen, vandaag, recente tips en het doel beginnen dan opnieuw. Dit kan niet ongedaan worden.",

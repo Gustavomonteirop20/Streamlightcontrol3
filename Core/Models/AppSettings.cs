@@ -301,6 +301,11 @@ public sealed class OverlayOptions : ObservableObject
     private int _alertMs = 7000;
     /// <summary>Hoe lang de kerst-tipalert in beeld blijft.</summary>
     public int AlertMs { get => _alertMs; set => Set(ref _alertMs, Math.Clamp(value, 2000, 60000)); }
+    /// <summary>Vanaf dit moment tellen de TikTok-overlays (knop "Nieuwe stream").</summary>
+    public DateTime TikTokStartUtc { get; set; } = DateTime.MinValue;
+    private int _tikTokAlertMs = 5000;
+    /// <summary>Hoe lang de kerst-giftalert (TikTok) in beeld blijft.</summary>
+    public int TikTokAlertMs { get => _tikTokAlertMs; set => Set(ref _tikTokAlertMs, Math.Clamp(value, 2000, 30000)); }
 }
 
 public sealed class AppSettings

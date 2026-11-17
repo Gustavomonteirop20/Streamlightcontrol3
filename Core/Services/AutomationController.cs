@@ -65,7 +65,8 @@ public sealed class AutomationController : IDisposable
             try { return OverlayCert.LoadOrCreate(Store.DataDirectory); }
             catch (Exception ex) { Errors.WriteLog($"[Overlays] certificaat: {ex.Message}"); return null; }
         });
-        Overlays = new OverlayServer(Donations, () => Settings.Overlays, Errors.WriteLog, () => _overlayCert.Value?.Leaf);
+        TikTok = new TikTokStats(Store.DataDirectory);
+        Overlays = new OverlayServer(Donations, () => Settings.Overlays, Errors.WriteLog, () => _overlayCert.Value?.Leaf, TikTok);
         Spotify = new SpotifyLightController(Engine, () => _targets, () => Settings, () => Queue.Current != null || Calibrating, Errors, nowPlaying, audio);
     }
 
@@ -75,6 +76,16 @@ public sealed class AutomationController : IDisposable
     public DonationStats Donations { get; }
     /// <summary>Lokale bron (127.0.0.1) voor de kerst-overlays in OBS / TikTok LIVE Studio.</summary>
     public OverlayServer Overlays { get; }
+    /// <summary>Gifts, volgers en subs voor de kerst-TikTok-overlays.</summary>
+    public TikTokStats TikTok { get; }
+
+    /// <summary>Nieuwe stream: leaderboard, Gift Gallery, grootste gift en laatste volger beginnen opnieuw.</summary>
+    public void ResetTikTokStream()
+    {
+        Settings.Overlays.TikTokStartUtc = DateTime.UtcNow;
+        TikTok.Touch();
+        Store.RequestSave();
+    }
 
     private readonly Lazy<OverlayCert?> _overlayCert;
     /// <summary>Eigen certificaat voor https://kerst.slc-overlay.nl (TikTok LIVE Studio).</summary>
@@ -472,6 +483,7 @@ public sealed class AutomationController : IDisposable
             return null;
 
         if (!e.IsTest) CountStats(e);
+        TikTok.Add(e);   // kerst-TikTok-overlays: altijd bijhouden, ook als de lampen uit staan
 
         var entry = new HistoryEntry
         {

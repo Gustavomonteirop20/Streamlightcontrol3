@@ -21,13 +21,15 @@ public sealed class OverlayServer : IDisposable
     private readonly DonationStats _stats;
     private readonly Action<string>? _log;
     private readonly Func<X509Certificate2?>? _cert;
+    private readonly TikTokStats? _tiktok;
     private TcpListener? _listener, _tlsListener;
     private CancellationTokenSource? _cts;
     private int _port;
 
-    public OverlayServer(DonationStats stats, Func<OverlayOptions> options, Action<string>? log = null, Func<X509Certificate2?>? certificate = null)
+    public OverlayServer(DonationStats stats, Func<OverlayOptions> options, Action<string>? log = null, Func<X509Certificate2?>? certificate = null,
+        TikTokStats? tiktok = null)
     {
-        _stats = stats; _options = options; _log = log; _cert = certificate;
+        _stats = stats; _options = options; _log = log; _cert = certificate; _tiktok = tiktok;
     }
 
     /// <summary>https draait (poort + 1) met het eigen certificaat.</summary>
@@ -53,7 +55,16 @@ public sealed class OverlayServer : IDisposable
         ("recent", "Recente tips", "420 × 420"),
         ("supporters", "Laatste supporter · Weekkampioen · Vandaag", "420 × 420"),
         ("alles", "Alles onder elkaar (staand)", "432 × 768"),
+        // Kerstversies van de BetterTok-onderdelen (gifts, volgers en subs via BetterTok)
+        ("tiktok-alert", "TikTok · Giftalert", "600 × 420"),
+        ("tiktok-gallery", "TikTok · Gift Gallery", "440 × 520"),
+        ("tiktok-ranking", "TikTok · Leaderboard (top gifters)", "420 × 480"),
+        ("tiktok-topgift", "TikTok · Grootste gift", "440 × 200"),
+        ("tiktok-volger", "TikTok · Laatste volger en sub", "420 × 260"),
+        ("tiktok-alles", "TikTok · Alles onder elkaar (staand)", "432 × 768"),
     };
+
+    public static bool IsTikTokView(string view) => view.StartsWith("tiktok-");
 
     public void Apply()
     {
@@ -189,13 +200,17 @@ public sealed class OverlayServer : IDisposable
         if (path == "/api/state")
             return ("200 OK", "application/json; charset=utf-8",
                 JsonSerializer.SerializeToUtf8Bytes(_stats.Snapshot(_options(), DateTime.UtcNow)));
+        if (path == "/api/tiktok")
+            return _tiktok == null
+                ? ("404 Not Found", "text/plain; charset=utf-8", Encoding.UTF8.GetBytes("Niet gevonden"))
+                : ("200 OK", "application/json; charset=utf-8", JsonSerializer.SerializeToUtf8Bytes(_tiktok.Snapshot(_options(), DateTime.UtcNow)));
         if (path is "" or "/kerst")
             return ("200 OK", "text/html; charset=utf-8", Encoding.UTF8.GetBytes(OverlayPages.Index(Views.Select(v => (v.Path, v.Name, v.Size)))));
         if (path.StartsWith("/kerst/"))
         {
             var view = path["/kerst/".Length..];
             if (Views.Any(v => v.Path == view))
-                return ("200 OK", "text/html; charset=utf-8", Encoding.UTF8.GetBytes(OverlayPages.Page(view)));
+                return ("200 OK", "text/html; charset=utf-8", Encoding.UTF8.GetBytes(IsTikTokView(view) ? TikTokPages.Page(view) : OverlayPages.Page(view)));
         }
         return ("404 Not Found", "text/plain; charset=utf-8", Encoding.UTF8.GetBytes("Niet gevonden"));
     }
