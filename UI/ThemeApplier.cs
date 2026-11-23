@@ -30,6 +30,17 @@ public static class ThemeApplier
         grad.Freeze();
         var subtitle = theme.Key == "standaard" ? "Control" : "Control · " + theme.Name.Split(' ')[0];
         foreach (var d in dicts) { d["AccentGradient"] = grad; d["BrandSubtitle"] = subtitle; }
+
+        // De stijlen (Controls.xaml) hebben bij het laden van de app de oude kleuren al vastgelegd:
+        // opnieuw laden, zodat knoppen, schakelaars enz. de kleuren van het thema pakken.
+        var merged = app.Resources.MergedDictionaries;
+        var controls = merged.FirstOrDefault(d => d.Source?.OriginalString.EndsWith("Controls.xaml", StringComparison.OrdinalIgnoreCase) == true);
+        if (controls != null)
+        {
+            var idx = merged.IndexOf(controls);
+            merged.Remove(controls);
+            merged.Insert(idx, new ResourceDictionary { Source = new Uri("pack://application:,,,/StreamLightControl;component/Themes/Controls.xaml", UriKind.Absolute) });
+        }
     }
 
     public static Color Parse(string hex)
