@@ -328,6 +328,11 @@ Sound en show lopen gelijk: de app rekent vanaf het moment van de tip (DonateWav
 Versie 3.18: de overlay laat een tip iets later zien dan het moment van de tip (ontvangen + animatie en
 geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later laten beginnen dan de tip" op de
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
+THEMA'S (versie 3.39) – Instellingen › Algemeen › Thema.
+Standaard (paars/blauw), Kerst (dennengroen, rood en goud), Herfst (bruin, oranje en mosterd), Zomer (zee, zon en
+turquoise) of Automatisch per seizoen (december kerst, september–november herfst, juni–augustus zomer, anders
+standaard). Na het kiezen op "Herstarten" klikken; de app start opnieuw in het nieuwe thema.
+
 BINNENKOMST NICK + SHOWMAKER (versie 3.38)
 Nick (nickstreams2): nieuwe show "♪ Binnenkomst Nick (zoals de video)", per videobeeld nagemaakt van Nick z'n
 video en op de kicks van het nummer gezet (160 BPM): donkere tik → amber → rood pompen, rode stukken die op de
