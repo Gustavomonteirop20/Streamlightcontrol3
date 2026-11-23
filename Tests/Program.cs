@@ -2508,7 +2508,7 @@ Test("Opstarten met instellingen van elke oudere versie (ook met ontbrekende ond
             await app.SetModeAsync(AppMode.Spotify); Lap("Spotify");
             await app.SetModeAsync(AppMode.Stream); Lap("Stream");
             app.Dispose(); Lap("Dispose");
-            if (v == 30 && strip == "" && !direct) Console.WriteLine("      tijden opstarten: " + string.Join(" · ", times));
+            if ((v is 4 or 9 or 30) && strip == "" && !direct) Console.WriteLine($"      tijden opstarten v{v}: " + string.Join(" · ", times));
         }
         catch (Exception ex) { throw new Exception($"versie {v}, direct={direct}, zonder '{strip}': {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}"); }
         finally { app.Dispose(); }
