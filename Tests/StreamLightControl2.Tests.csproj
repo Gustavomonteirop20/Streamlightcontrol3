@@ -11,6 +11,8 @@
   <ItemGroup>
     <Compile Include="..\Core\**\*.cs" Link="Core\%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Remove="SoundCheck\**" />
+    <Compile Remove="ThemeCheck\**" />
     <None Remove="SoundCheck\**" />
+    <None Remove="ThemeCheck\**" />
   </ItemGroup>
 </Project>

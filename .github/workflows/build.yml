@@ -32,3 +32,21 @@ jobs:
       - name: Showmaker – mp3/m4a lezen zoals de app
         shell: pwsh
         run: dotnet run --project Tests/SoundCheck/SoundCheck.csproj -c Release
+
+      - name: Thema's – echte stijlen van de app met elk thema
+        shell: pwsh
+        run: |
+          $fail = 0
+          foreach ($t in 'standaard','kerst','herfst','zomer') {
+            dotnet run --project Tests/ThemeCheck/ThemeCheck.csproj -- $t "$PWD/thema-$t.png"
+            if ($LASTEXITCODE -ne 0) { $fail = 1 }
+          }
+          exit $fail
+
+      - name: Thema-plaatjes bewaren
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: themas
+          path: thema-*.png
+          if-no-files-found: ignore

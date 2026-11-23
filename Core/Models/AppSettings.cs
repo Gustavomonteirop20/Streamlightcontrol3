@@ -201,6 +201,9 @@ public sealed class GeneralOptions : ObservableObject
     /// <summary>Blijft bewaard na herstart, zodat de app nooit onverwacht effecten afspeelt.</summary>
     public bool SafeMode { get => _safeMode; set => Set(ref _safeMode, value); }
     public bool StreamModeTopmost { get => _streamModeTopmost; set => Set(ref _streamModeTopmost, value); }
+    private string _theme = "standaard";
+    /// <summary>Thema van de app: standaard, kerst, herfst, zomer of auto (per seizoen).</summary>
+    public string Theme { get => _theme; set => Set(ref _theme, string.IsNullOrWhiteSpace(value) ? "standaard" : value.Trim().ToLowerInvariant()); }
 }
 
 public sealed class SpotifyOptions : ObservableObject

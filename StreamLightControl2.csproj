@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>StreamLightControl2</RootNamespace>
     <AssemblyName>StreamLightControl</AssemblyName>
-    <Version>3.38.0</Version>
+    <Version>3.39.0</Version>
     <Product>Stream Light Control</Product>
     <AssemblyTitle>Stream Light Control</AssemblyTitle>
     <SatelliteResourceLanguages>nl</SatelliteResourceLanguages>

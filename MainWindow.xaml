@@ -20,11 +20,11 @@
                     <!-- Logo -->
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,0,22">
                         <Border Width="34" Height="34" CornerRadius="9" Background="{StaticResource AccentGradient}">
-                            <TextBlock Text="&#xEA80;" FontFamily="{StaticResource IconFont}" FontSize="17" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="&#xEA80;" FontFamily="{StaticResource IconFont}" FontSize="17" Foreground="{StaticResource OnAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="Stream Light" FontWeight="SemiBold" FontSize="14"/>
-                            <TextBlock Text="Control" Style="{StaticResource Caption}" Margin="0,-1,0,0"/>
+                            <TextBlock Text="{StaticResource BrandSubtitle}" Style="{StaticResource Caption}" Margin="0,-1,0,0"/>
                         </StackPanel>
                     </StackPanel>
 

@@ -163,7 +163,7 @@
     <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
         <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}"/>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="Background" Value="{StaticResource AccentHoverBrush}"/>
@@ -409,7 +409,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Track" Property="Background" Value="{StaticResource AccentBrush}"/>
-                            <Setter TargetName="Knob" Property="Fill" Value="White"/>
+                            <Setter TargetName="Knob" Property="Fill" Value="{StaticResource OnAccentBrush}"/>
                             <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
@@ -430,7 +430,7 @@
                 <ControlTemplate TargetType="CheckBox">
                     <StackPanel Orientation="Horizontal" Background="Transparent">
                         <Border x:Name="Box" Width="18" Height="18" CornerRadius="5" BorderThickness="1" BorderBrush="{StaticResource Text3Brush}" Background="{StaticResource InputBrush}">
-                            <TextBlock x:Name="Mark" Text="&#xE73E;" FontFamily="{StaticResource IconFont}" FontSize="11" Foreground="White"
+                            <TextBlock x:Name="Mark" Text="&#xE73E;" FontFamily="{StaticResource IconFont}" FontSize="11" Foreground="{StaticResource OnAccentBrush}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
                         </Border>
                         <ContentPresenter Margin="9,0,0,0" VerticalAlignment="Center"/>

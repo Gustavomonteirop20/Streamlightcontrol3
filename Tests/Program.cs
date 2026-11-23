@@ -1534,6 +1534,39 @@ TestSync("Showmaker: .wav lezen (16/24-bit, stereo, float) en duidelijke fout bi
     True(threw, "stilte → 'De sound is stil.'");
 });
 
+TestSync("Thema's: standaard, kerst, herfst, zomer – alle kleuren, goed leesbaar, automatisch per seizoen", () =>
+{
+    double Lum(string hex)
+    {
+        var h = hex.TrimStart('#'); if (h.Length == 8) h = h[2..];
+        double C(int i) { var c = Convert.ToInt32(h.Substring(i, 2), 16) / 255.0; return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4); }
+        return 0.2126 * C(0) + 0.7152 * C(2) + 0.0722 * C(4);
+    }
+    double Contrast(string a, string b) { var (x, y) = (Lum(a), Lum(b)); return (Math.Max(x, y) + 0.05) / (Math.Min(x, y) + 0.05); }
+    Eq(4, AppThemes.All.Count);
+    foreach (var t in AppThemes.All)
+    {
+        foreach (var k in AppThemes.Keys)
+            True(t.Colors.TryGetValue(k, out var v) && System.Text.RegularExpressions.Regex.IsMatch(v, "^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$"), $"{t.Key}: kleur {k}");
+        True(Contrast(t.Colors["Text"], t.Colors["Bg"]) >= 12, $"{t.Key}: tekst op achtergrond ({Contrast(t.Colors["Text"], t.Colors["Bg"]):0.0})");
+        True(Contrast(t.Colors["Text2"], t.Colors["Card"]) >= 6, $"{t.Key}: grijze tekst op kaart ({Contrast(t.Colors["Text2"], t.Colors["Card"]):0.0})");
+        True(Contrast(t.Colors["Text3"], t.Colors["Card"]) >= 3, $"{t.Key}: lichte tekst op kaart ({Contrast(t.Colors["Text3"], t.Colors["Card"]):0.0})");
+        True(Contrast(t.Colors["OnAccent"], t.Colors["Accent"]) >= 3.8, $"{t.Key}: knoptekst op accent ({Contrast(t.Colors["OnAccent"], t.Colors["Accent"]):0.0})");
+    }
+    Eq("kerst", AppThemes.Resolve("auto", new DateTime(2026, 12, 5)).Key);
+    Eq("herfst", AppThemes.Resolve("auto", new DateTime(2026, 10, 5)).Key);
+    Eq("zomer", AppThemes.Resolve("auto", new DateTime(2026, 7, 5)).Key);
+    Eq("standaard", AppThemes.Resolve("auto", new DateTime(2026, 3, 5)).Key);
+    Eq("herfst", AppThemes.Resolve("HERFST", DateTime.Today).Key);
+    Eq("standaard", AppThemes.Resolve("onzin", DateTime.Today).Key);
+    Eq("standaard", AppThemes.Resolve(null, DateTime.Today).Key);
+    var g = new GeneralOptions(); Eq("standaard", g.Theme); g.Theme = " Kerst "; Eq("kerst", g.Theme);
+    // wordt bewaard
+    var s = DefaultSettings(); s.General.Theme = "zomer";
+    var back = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(System.Text.Json.JsonSerializer.Serialize(s, SettingsStore.JsonOptions), SettingsStore.JsonOptions)!;
+    Eq("zomer", back.General.Theme);
+});
+
 TestSync("Opslag: versie 30 → 31 voegt de binnenkomst van Martin toe, eigen regels blijven", () =>
 {
     var s = DefaultSettings();

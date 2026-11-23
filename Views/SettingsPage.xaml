@@ -20,6 +20,18 @@
                         <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding SafeMode, Mode=OneWay}" Click="SafeMode_Click">
                             <TextBlock><Run Text="Safe Mode"/><Run Text="  – alle automatiseringen uit, instellingen blijven bewaard" Foreground="{StaticResource Text3Brush}"/></TextBlock>
                         </CheckBox>
+                        <TextBlock Text="Thema" Style="{StaticResource FieldLabel}" Margin="0,18,0,0"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox x:Name="ThemeBox" DisplayMemberPath="Name" SelectedValuePath="Key" SelectionChanged="Theme_SelectionChanged"/>
+                            <Button x:Name="ThemeRestartButton" Grid.Column="1" Style="{StaticResource PrimaryButton}" Tag="&#xE72C;" Content="Herstarten" Margin="8,0,0,0"
+                                    Visibility="Collapsed" Click="ThemeRestart_Click" ToolTip="De app opnieuw starten met het nieuwe thema"/>
+                        </Grid>
+                        <TextBlock x:Name="ThemeHint" Style="{StaticResource Caption}" Margin="0,6,0,0" TextWrapping="Wrap"
+                                   Text="Kerst, herfst of zomer: andere kleuren voor de hele app. ‘Automatisch’ kiest zelf het seizoen."/>
                     </StackPanel>
                 </Border>
 

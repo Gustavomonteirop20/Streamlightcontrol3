@@ -326,7 +326,9 @@ public partial class MainWindow : Window
             var hwnd = new WindowInteropHelper(this).Handle;
             var on = 1;
             DwmSetWindowAttribute(hwnd, 20, ref on, sizeof(int));           // DWMWA_USE_IMMERSIVE_DARK_MODE
-            var caption = 0x00130E0D;                                      // #0D0E13 als 0x00BBGGRR
+            // kleur van de zijbalk (thema) als 0x00BBGGRR
+            var c = Application.Current.TryFindResource("SidebarColor") is System.Windows.Media.Color sc ? sc : System.Windows.Media.Color.FromRgb(0x0D, 0x0E, 0x13);
+            var caption = c.R | (c.G << 8) | (c.B << 16);
             DwmSetWindowAttribute(hwnd, 35, ref caption, sizeof(int));      // DWMWA_CAPTION_COLOR (Windows 11)
         }
         catch { /* oudere Windows-versies: standaard titelbalk */ }

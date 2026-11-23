@@ -37,6 +37,7 @@
     <Color x:Key="DangerSoftColor">#24F2556F</Color>
     <Color x:Key="InfoSoftColor">#224F8DFF</Color>
     <Color x:Key="LiveColor">#FF3B5C</Color>
+    <Color x:Key="OnAccentColor">#FFFFFF</Color>
 
     <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource SidebarColor}"/>
     <SolidColorBrush x:Key="BgBrush" Color="{StaticResource BgColor}"/>
@@ -62,6 +63,8 @@
     <SolidColorBrush x:Key="DangerSoftBrush" Color="{StaticResource DangerSoftColor}"/>
     <SolidColorBrush x:Key="InfoSoftBrush" Color="{StaticResource InfoSoftColor}"/>
     <SolidColorBrush x:Key="LiveBrush" Color="{StaticResource LiveColor}"/>
+    <SolidColorBrush x:Key="OnAccentBrush" Color="{StaticResource OnAccentColor}"/>
+    <sys:String x:Key="BrandSubtitle">Control</sys:String>
 
     <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">
         <GradientStop Color="#8B6CF6" Offset="0"/>

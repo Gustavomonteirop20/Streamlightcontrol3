@@ -18,6 +18,7 @@ public partial class SettingsPage : UserControl
         DataContext = App.State;
         DataPath.Text = C.Store.DataDirectory;
         UpdateRestore();
+        InitThemes();
         CurrentVersionRun.Text = App.Updater.CurrentVersion;
         App.Updater.PropertyChanged += (_, _) => Dispatcher.BeginInvoke(RefreshUpdate);
         RefreshUpdate();
@@ -171,6 +172,36 @@ public partial class SettingsPage : UserControl
     {
         var path = Path.Combine(C.Store.DataDirectory, $"backup-{DateTime.Now:yyyyMMdd-HHmmss}.json");
         C.Store.ExportTo(path);
+    }
+
+    // ---------------------------------------------------------------- thema
+
+    private sealed record ThemeChoice(string Key, string Name);
+    private bool _themeReady;
+
+    private void InitThemes()
+    {
+        ThemeBox.ItemsSource = AppThemes.Choices.Select(c => new ThemeChoice(c.Key, c.Name)).ToList();
+        ThemeBox.SelectedValue = AppThemes.Choices.Any(c => c.Key == C.Settings.General.Theme) ? C.Settings.General.Theme : "standaard";
+        _themeReady = true;
+    }
+
+    private void Theme_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_themeReady || ThemeBox.SelectedValue is not string key) return;
+        C.Settings.General.Theme = key;
+        var willBe = AppThemes.Resolve(key, DateTime.Today);
+        var changes = willBe.Key != ThemeApplier.Current.Key;
+        ThemeRestartButton.Visibility = changes ? Visibility.Visible : Visibility.Collapsed;
+        ThemeHint.Text = changes
+            ? $"Opgeslagen: {willBe.Name}. Klik op Herstarten om het nieuwe thema te zien (een lopende show stopt dan)."
+            : "Kerst, herfst of zomer: andere kleuren voor de hele app. ‘Automatisch’ kiest zelf het seizoen.";
+    }
+
+    private void ThemeRestart_Click(object sender, RoutedEventArgs e)
+    {
+        C.Store.SaveNow();
+        Restart();
     }
 
     private static void Restart()

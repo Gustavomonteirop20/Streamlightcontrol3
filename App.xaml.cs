@@ -40,6 +40,9 @@ public partial class App : Application
         Controller = new AutomationController();
         Controller.Dispatch = action => Dispatcher.BeginInvoke(action);
         Controller.Initialize();
+        // Thema (kerst, herfst, zomer…) vóór het eerste venster, zodat alle stijlen de juiste kleuren pakken
+        try { ThemeApplier.Apply(this, AppThemes.Resolve(Controller.Settings.General.Theme, DateTime.Today)); }
+        catch (Exception ex) { Controller.Errors.Report("app.crash", "Thema: " + ex.Message); }
         State = new UiState(Controller);
 
         Updater = new Updater(Controller.Store.DataDirectory);
