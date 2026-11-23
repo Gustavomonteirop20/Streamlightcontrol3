@@ -28,6 +28,8 @@ public sealed class ShowFile
     [JsonPropertyName("fast")] public string Fast { get; set; } = "";
     /// <summary>Veilige versie (±550 ms). Leeg = zelfde als <see cref="Fast"/>.</summary>
     [JsonPropertyName("safe")] public string Safe { get; set; } = "";
+    /// <summary>Precies afspelen zoals gemaakt (bijv. gemaakt van een sound of video).</summary>
+    [JsonPropertyName("exact")] public bool Exact { get; set; }
 
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = false, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
@@ -56,7 +58,8 @@ public sealed class ShowFile
         Song = show.Name.TrimStart('♪', ' '),
         DurationMs = show.TotalDurationMs,
         Fast = show.HasTiers ? show.FastData : Presets.ToData(show.Steps),
-        Safe = show.HasTiers ? show.SafeData : Presets.ToData(show.Steps)
+        Safe = show.HasTiers ? show.SafeData : Presets.ToData(show.Steps),
+        Exact = show.PlayExact
     };
 
     /// <summary>Leest een .png (met ingebedde show) of .json.</summary>
@@ -181,6 +184,7 @@ public sealed class ShowFile
         show.FastData = Presets.ToData(Presets.ParseData(Fast));
         show.SafeData = Presets.ToData(Presets.ParseData(Safe));
         show.Steps = Presets.ParseData(fast ? Fast : Safe);
+        show.PlayExact = Exact;
         if (existing == null)
         {
             if (s.Shows.Any(x => string.Equals(x.Name, show.Name, StringComparison.OrdinalIgnoreCase))) show.Name += " (import)";

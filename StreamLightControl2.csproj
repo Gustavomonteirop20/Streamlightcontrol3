@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>StreamLightControl2</RootNamespace>
     <AssemblyName>StreamLightControl</AssemblyName>
-    <Version>3.37.1</Version>
+    <Version>3.38.0</Version>
     <Product>Stream Light Control</Product>
     <AssemblyTitle>Stream Light Control</AssemblyTitle>
     <SatelliteResourceLanguages>nl</SatelliteResourceLanguages>
@@ -27,6 +27,11 @@
 
   <ItemGroup>
     <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+  <!-- Showmaker: mp3/m4a/mp4/wma lezen via Windows Media Foundation -->
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.2.1" />
   </ItemGroup>
 
   <!-- De testrunner is een apart project en hoort niet in de app -->

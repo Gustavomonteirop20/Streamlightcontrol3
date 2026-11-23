@@ -10,5 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\Core\**\*.cs" Link="Core\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Remove="SoundCheck\**" />
+    <None Remove="SoundCheck\**" />
   </ItemGroup>
 </Project>

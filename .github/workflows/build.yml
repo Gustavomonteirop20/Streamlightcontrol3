@@ -28,3 +28,7 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: dotnet run --project Tests/StreamLightControl2.Tests.csproj -c Release
+
+      - name: Showmaker – mp3/m4a lezen zoals de app
+        shell: pwsh
+        run: dotnet run --project Tests/SoundCheck/SoundCheck.csproj -c Release

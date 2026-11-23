@@ -92,6 +92,9 @@ public sealed class LightShow : ObservableObject
     public string FastData { get; set; } = "";
     public string SafeData { get; set; } = "";
     [JsonIgnore] public bool HasTiers => FastData != "" && SafeData != "";
+    private bool _playExact;
+    /// <summary>Precies afspelen zoals gemaakt (geen rustige/festival-omzetting), bijv. een show nagemaakt van een video.</summary>
+    public bool PlayExact { get => _playExact; set => Set(ref _playExact, value); }
 
     public LightShow() => HookSteps();
 
@@ -144,7 +147,7 @@ public sealed class LightShow : ObservableObject
         Name = Name,
         Repeats = Repeats,
         PresetKey = newId ? "" : PresetKey,
-        FastData = FastData, SafeData = SafeData,
+        FastData = FastData, SafeData = SafeData, PlayExact = PlayExact,
         Steps = new ObservableCollection<LightStep>(Steps.Select(s => s.Clone()))
     };
 
@@ -155,6 +158,7 @@ public sealed class LightShow : ObservableObject
         Repeats = other.Repeats;
         FastData = other.FastData;
         SafeData = other.SafeData;
+        PlayExact = other.PlayExact;
         Steps = new ObservableCollection<LightStep>(other.Steps.Select(s => s.Clone()));
     }
 }

@@ -135,6 +135,7 @@ public partial class LightShowsPage : UserControl, IPageActivated
     private async void Page_Drop(object sender, DragEventArgs e)
     {
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] files) return;
+        foreach (var sound in files.Where(SoundDecoder.IsSound)) await MakeFromSoundAsync(sound, ShowGenerator.Palettes[0].Key);
         foreach (var file in files.Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
                                           || f.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
                                           || f.EndsWith(".slcshow", StringComparison.OrdinalIgnoreCase)))
@@ -199,6 +200,65 @@ public partial class LightShowsPage : UserControl, IPageActivated
             Ui.Toast("Geëxporteerd. Sleep het bestand in Light Shows (op deze of een andere pc) om het te importeren.", ToastKind.Success);
         }
         catch (Exception ex) { Ui.Toast("Exporteren mislukt: " + ex.Message, ToastKind.Error); }
+    }
+
+    // ---------------------------------------------------------------- showmaker: show van een sound
+
+    private void FromSound_Click(object sender, RoutedEventArgs e)
+    {
+        // Eerst de kleuren kiezen, dan de sound
+        var menu = new ContextMenu { PlacementTarget = FromSoundButton, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
+        foreach (var p in ShowGenerator.Palettes)
+        {
+            var item = new MenuItem { Header = p.Name, Tag = p.Key };
+            item.Click += async (_, _) =>
+            {
+                var dlg = new Microsoft.Win32.OpenFileDialog { Title = "Sound kiezen voor de nieuwe show", Filter = SoundDecoder.Filter };
+                if (dlg.ShowDialog() == true) await MakeFromSoundAsync(dlg.FileName, p.Key);
+            };
+            menu.Items.Add(item);
+        }
+        menu.IsOpen = true;
+    }
+
+    private bool _making;
+
+    private async Task MakeFromSoundAsync(string path, string paletteKey)
+    {
+        if (_making) return;
+        _making = true;
+        FromSoundButton.IsEnabled = false;
+        var label = FromSoundButton.Content;
+        FromSoundButton.Content = "Sound beluisteren…";
+        try
+        {
+            var name = "♪ " + System.IO.Path.GetFileNameWithoutExtension(path);
+            var (show, a) = await Task.Run(() =>
+            {
+                var (mono, rate) = SoundDecoder.Decode(path);
+                var analysis = ShowGenerator.Analyze(mono, rate);
+                return (ShowGenerator.Generate(analysis, name, paletteKey), analysis);
+            });
+            show.Name = UniqueName(show.Name);
+            // Snelle of veilige versie, net als de andere shows
+            if (!ShowTiers.IsFast(S.Settings.Lighting)) show.Steps = Presets.ParseData(show.SafeData);
+            S.Settings.Shows.Add(show);
+            SearchBox.Text = "";
+            ShowsList.SelectedItem = show;
+            ShowsList.ScrollIntoView(show);
+            var drops = a.Bars.Count(b => b == BarKind.Drop);
+            Ui.Toast($"Show gemaakt: {a.Bpm:0} BPM, {a.Kicks.Count} kicks, {drops} drop-maten · {show.TotalDurationMs / 1000.0:0.0} s. Koppel hem bij Event Manager aan een gift of binnenkomst.");
+        }
+        catch (Exception ex)
+        {
+            Ui.Toast($"‘{System.IO.Path.GetFileName(path)}’: {ex.Message}", ToastKind.Error);
+        }
+        finally
+        {
+            FromSoundButton.Content = label;
+            FromSoundButton.IsEnabled = true;
+            _making = false;
+        }
     }
 
     private void New_Click(object sender, RoutedEventArgs e)

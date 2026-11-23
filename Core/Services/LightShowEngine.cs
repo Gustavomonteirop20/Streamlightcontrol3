@@ -42,6 +42,7 @@ public sealed class LightShowEngine
     {
         if (show.Steps.Count == 0) return;
         var opt = _options();
+        if (show.PlayExact) { await PlayExactAsync(show, ips, token, startOffsetMs, opt); return; }
         if (opt.CalmShows) { await PlayCalmAsync(show, ips, token, startOffsetMs, opt); return; }
         _govee.CommandDelayMs = opt.EffectiveCommandDelayMs;
         // De lamp kan intussen via de Govee-app zijn veranderd: begin elke show met een schone lei.
@@ -251,6 +252,68 @@ public sealed class LightShowEngine
                             lastBase[ip] = color;
                             await SetColor(ip, color, token);
                         }
+                    });
+                }
+                await HoldUntil(clock, offset + total, token);
+            }
+        }
+        finally
+        {
+            Finished?.Invoke(show.Id);
+        }
+    }
+
+    /// <summary>
+    /// Precies afspelen: elke stap precies zoals hij gemaakt is (bijv. nagemaakt van een video), hele strip één kleur.
+    /// Stap met kleur B: op de zichtbare zones om-en-om A/B (bij 2+ lampen per lamp). Wit hooguit 3× per seconde.
+    /// </summary>
+    private async Task PlayExactAsync(LightShow show, IReadOnlyList<string> ips, CancellationToken token, int startOffsetMs, LightingOptions opt)
+    {
+        _govee.CommandDelayMs = opt.EffectiveCommandDelayMs;
+        ForgetState();
+        var total = Math.Max(1, show.TotalDurationMs);
+        var master = opt.ShowBrightness / 100.0;
+        await ForAll(ips, ip => EnsureOnAndBrightness(ip, 100, token));
+        using var hires = TimerResolution.High();
+        var margin = hires.Active ? 10 : 20;
+        var clock = Stopwatch.StartNew();
+        long lastWhite = long.MinValue / 2;
+        try
+        {
+            for (var rep = 0; rep < show.Repeats; rep++)
+            {
+                long offset = (long)rep * total - opt.LatencyMs - Math.Max(0, startOffsetMs);
+                long at = offset;
+                for (var i = 0; i < show.Steps.Count; i++)
+                {
+                    token.ThrowIfCancellationRequested();
+                    var step = show.Steps[i];
+                    var start = at;
+                    at += step.DurationMs;
+                    if (rep == 0 && at <= -opt.LatencyMs) continue;   // al voorbij (show begint midden in)
+                    var off = step.Kind == StepKind.Off;
+                    (byte r, byte g, byte b) a = off ? ((byte)0, (byte)0, (byte)0) : Scale(ColorUtil.ParseHex(step.ColorHex), step.Brightness / 100.0 * master);
+                    var b = !off && step.IsSplit ? Scale(ColorUtil.ParseHex(step.ColorHex2), step.Brightness / 100.0 * master) : a;
+                    var white = !off && step.ColorHex == "#FFFFFF";
+                    if (white && opt.LimitStrobes && start - lastWhite < 333) { await HoldUntil(clock, at, token); continue; }
+                    if (white) lastWhite = start;
+                    await HoldPrecise(clock, Math.Max(start, -opt.LatencyMs - Math.Max(0, startOffsetMs)), margin, token);
+                    Emit(show, i, rep, ColorUtil.ToHex(a.r, a.g, a.b), off ? 0 : step.Brightness, !off,
+                        Math.Min(1, (start - offset + rep * (long)total) / (double)(total * Math.Max(1, show.Repeats))));
+                    var k = 0;
+                    await ForAll(ips, async ip =>
+                    {
+                        var mine = ips.Count >= 2 && step.IsSplit && Interlocked.Increment(ref k) % 2 == 0 ? b : a;
+                        var z = ZonesFor(ip, opt);
+                        if (z == null) { await SetColor(ip, mine, token); return; }
+                        var zones = Enumerable.Repeat(a, z.Count).ToList();
+                        if (step.IsSplit && ips.Count < 2)
+                        {
+                            var vis = z.Visible.Where(v => v >= 1 && v <= z.Count).ToList();
+                            for (var n = 0; n < vis.Count; n++) zones[vis[n] - 1] = n % 2 == 0 ? a : b;
+                        }
+                        else if (ips.Count >= 2) zones = Enumerable.Repeat(mine, z.Count).ToList();
+                        await SendZonesAsync(ip, z, zones, a, token);
                     });
                 }
                 await HoldUntil(clock, offset + total, token);

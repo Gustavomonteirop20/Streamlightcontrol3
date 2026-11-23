@@ -24,6 +24,8 @@
                                 Click="New_Click" ToolTip="Nieuwe lichtshow maken"/>
                     </StackPanel>
                 </Grid>
+                <Button x:Name="FromSoundButton" DockPanel.Dock="Top" Style="{StaticResource SecondaryButton}" Tag="&#xE8D6;" Content="Show maken van een sound…" MinHeight="32" Margin="0,0,0,10"
+                        Click="FromSound_Click" ToolTip="Kies een sound (mp3, wav, m4a, mp4): de app hoort de beat, kicks, drops en rustige stukken en maakt er een show van in de stijl van Nick z'n video. Je kunt een sound ook op deze pagina slepen."/>
                 <TextBox x:Name="SearchBox" DockPanel.Dock="Top" ui:Hint.Text="Zoeken…" Margin="0,0,0,10" TextChanged="Search_TextChanged"/>
                 <ListBox x:Name="ShowsList" SelectionChanged="ShowsList_SelectionChanged">
                     <ListBox.ItemTemplate>
@@ -94,6 +96,9 @@
                                     <TextBlock Text="Totale duur" Style="{StaticResource FieldLabel}"/>
                                     <TextBlock Text="{Binding TotalDurationMs, Converter={StaticResource MsToSec}}" Style="{StaticResource H2}" Margin="0,6,0,0"/>
                                 </StackPanel>
+                                <CheckBox Style="{StaticResource Switch}" Content="Precies afspelen" Margin="20,0,0,4" VerticalAlignment="Bottom"
+                                          IsChecked="{Binding PlayExact}"
+                                          ToolTip="Aan: de show speelt precies zoals hij gemaakt is (zoals de show van Nick), niet omgezet naar de rustige/festival-stijl. Shows gemaakt van een sound staan dit standaard aan."/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                                 <Button Style="{StaticResource SmallButton}" Tag="&#xEDE1;" Content="Exporteren" Margin="0,0,6,0" Click="Export_Click"

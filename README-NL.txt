@@ -328,6 +328,23 @@ Sound en show lopen gelijk: de app rekent vanaf het moment van de tip (DonateWav
 Versie 3.18: de overlay laat een tip iets later zien dan het moment van de tip (ontvangen + animatie en
 geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later laten beginnen dan de tip" op de
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
+BINNENKOMST NICK + SHOWMAKER (versie 3.38)
+Nick (nickstreams2): nieuwe show "♪ Binnenkomst Nick (zoals de video)", per videobeeld nagemaakt van Nick z'n
+video en op de kicks van het nummer gezet (160 BPM): donkere tik → amber → rood pompen, rode stukken die op de
+beat pompen, rood ↔ donker vlak voor de drop, blauw met een donkere tik op de beat en amber ertussen in de drop.
+Had je zelf al een regel voor nickstreams2 gemaakt? Dan krijgt díe regel deze show (sound-duur, prioriteit e.d.
+blijven zoals jij ze had). Anders staat er een nieuwe regel "♪ Binnenkomst Nick".
+Begint de sound bij jou met Nick die praat (zoals in de video, ±3,2 s)? Zet dan bij de regel "Show pas starten na (seconden)" op 3,16.
+
+PRECIES AFSPELEN: een show met "Precies afspelen" aan speelt elke stap zoals hij gemaakt is (niet omgezet naar de
+rustige/festival-stijl). Staat in de editor naast Herhalingen.
+
+SHOWMAKER: Lichtshows › "Show maken van een sound…" (of sleep een sound op de pagina). Kies de kleuren, kies een
+.mp3, .wav, .m4a of .mp4. De app hoort het tempo, de kicks, groove (met hi-hats), melodie, opbouw en drop en maakt
+een show in dezelfde stijl als die van Nick (precies afspelen staat aan). Op het nummer van Nick komt 70% van de
+tijd dezelfde kleur uit als in de video. Daarna kun je hem zoals altijd aanpassen en koppelen in de Event Manager.
+Let op: de eerste keer MaakExe.bat draaien haalt het onderdeel NAudio op (internet nodig).
+
 CONTROLE EN BUGFIXES (versie 3.37.1)
   · Bij elke wijziging bouwt GitHub de hele app nu op Windows (ook de schermen) en draait alle tests.
   · Gift-regen: de TikTok-tellers worden op de achtergrond opgeslagen (na 2 s rust) in plaats van bij elke gift,

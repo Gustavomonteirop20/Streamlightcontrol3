@@ -408,7 +408,21 @@ public sealed class SettingsStore : IDisposable
             s.Version = 31;
             changed = true;
         }
-        if (changed && s.Version < 31) s.Version = 31;
+        if (startVersion < 32)
+        {
+            // Versie 32: binnenkomst van nickstreams2 zoals in de video. Heeft de streamer al een eigen regel voor
+            // nickstreams2 gemaakt, dan krijgt díe regel de nieuwe show (de rest van de regel blijft zoals hij was).
+            var own = s.Triggers.Where(t => t.Id != "te-nickstreams2" && t.EventType == EventTypes.Member &&
+                (t.MatchText ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                    .Any(n => n.TrimStart('@').Equals("nickstreams2", StringComparison.OrdinalIgnoreCase))).ToList();
+            foreach (var t in own) t.ShowId = "preset-song-nick";
+            if (own.Count == 0 && s.Triggers.All(t => t.Id != "te-nickstreams2"))
+                s.Triggers.Add(Presets.EntranceRules().Single(t => t.Id == "te-nickstreams2"));
+            foreach (var sh in s.Shows.Where(x => Presets.ExactSongs.Contains(x.PresetKey))) sh.PlayExact = true;
+            s.Version = 32;
+            changed = true;
+        }
+        if (changed && s.Version < 32) s.Version = 32;
         return changed;
     }
 

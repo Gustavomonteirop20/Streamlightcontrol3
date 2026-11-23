@@ -21,6 +21,7 @@ public static class Presets
         show.PresetKey = song.Key;
         show.FastData = song.Data;
         show.SafeData = song.SafeData;
+        show.PlayExact = ExactSongs.Contains(song.Key);
         return show;
     }
 
@@ -61,6 +62,9 @@ public static class Presets
 
     /// <summary>Gezellige song-shows (bijv. een kinderliedje): warme kleuren en zachte overgangen, geen wit of strobes.</summary>
     public static readonly IReadOnlySet<string> CozySongs = new HashSet<string> { "song-thomas" };
+
+    /// <summary>Song-shows die precies zo spelen als ze gemaakt zijn (nagemaakt van een video), zonder omzetting.</summary>
+    public static readonly IReadOnlySet<string> ExactSongs = new HashSet<string> { "song-nick" };
 
     /// <summary>Presets met een snelle club-versie voor strips die direct springen.</summary>
     public static readonly IReadOnlySet<string> FastKeys = new HashSet<string> { Police, Party, Follow, Victory, BigGift, SmallGift, MediumGift, MegaGift };
@@ -163,6 +167,7 @@ public static class Presets
         ("thomas", "thomas", "Thomas", 28440, "song-thomas"),
         ("diego", "diego", "Diego", 31974, "song-diego"),
         ("martin", "martin", "Martin", 42841, "song-c4"),   // zelfde sound als de dono "Hoe detonate ik zo een C4"
+        ("nickstreams2", "nickstreams2", "Nick", 50852, "song-nick"),   // zoals in Nick z'n video
     };
 
     /// <summary>Als deze kijker de LIVE binnenkomt speelt zijn eigen ♪-show (op zijn binnenkomst-sound in BetterTok).</summary>
