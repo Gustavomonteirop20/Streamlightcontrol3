@@ -15,10 +15,18 @@ public static class ThemeApplier
     public static void Apply(Application app, AppTheme theme)
     {
         Current = theme;
-        // De kleuren staan in Themes/Theme.xaml; daar vervangen (en voor de zekerheid ook bovenaan in de app)
+        // De kleuren staan in Themes/Theme.xaml. Dat bestand zit twee keer in de app (bovenaan én binnen
+        // Controls.xaml, waar de stijlen het gebruiken): overal vervangen, en voor de zekerheid ook bovenaan.
         var dicts = new List<ResourceDictionary> { app.Resources };
-        var themeDict = app.Resources.MergedDictionaries.FirstOrDefault(d => d.Source?.OriginalString.EndsWith("Theme.xaml", StringComparison.OrdinalIgnoreCase) == true);
-        if (themeDict != null) dicts.Insert(0, themeDict);
+        void Find(ResourceDictionary d)
+        {
+            foreach (var m in d.MergedDictionaries)
+            {
+                if (m.Source?.OriginalString.EndsWith("Theme.xaml", StringComparison.OrdinalIgnoreCase) == true) dicts.Insert(0, m);
+                Find(m);
+            }
+        }
+        Find(app.Resources);
         foreach (var key in AppThemes.Keys)
         {
             if (!theme.Colors.TryGetValue(key, out var hex)) continue;
@@ -31,16 +39,6 @@ public static class ThemeApplier
         var subtitle = theme.Key == "standaard" ? "Control" : "Control · " + theme.Name.Split(' ')[0];
         foreach (var d in dicts) { d["AccentGradient"] = grad; d["BrandSubtitle"] = subtitle; }
 
-        // De stijlen (Controls.xaml) hebben bij het laden van de app de oude kleuren al vastgelegd:
-        // opnieuw laden, zodat knoppen, schakelaars enz. de kleuren van het thema pakken.
-        var merged = app.Resources.MergedDictionaries;
-        var controls = merged.FirstOrDefault(d => d.Source?.OriginalString.EndsWith("Controls.xaml", StringComparison.OrdinalIgnoreCase) == true);
-        if (controls != null)
-        {
-            var idx = merged.IndexOf(controls);
-            merged.Remove(controls);
-            merged.Insert(idx, new ResourceDictionary { Source = new Uri("pack://application:,,,/StreamLightControl;component/Themes/Controls.xaml", UriKind.Absolute) });
-        }
     }
 
     public static Color Parse(string hex)
