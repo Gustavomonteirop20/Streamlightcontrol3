@@ -765,6 +765,7 @@ public sealed class AutomationController : IDisposable
         Store.SaveNow();
         Store.Dispose();
         History.Dispose();
+        TikTok.SaveNow();
         Govee.Dispose();
     }
 }

@@ -175,6 +175,9 @@ public sealed class AutomationQueue : IDisposable
         Changed?.Invoke();
     }
 
+    /// <summary>Een fout in een schermonderdeel mag de wachtrij nooit stoppen.</summary>
+    private static void Safe(Action? a) { try { a?.Invoke(); } catch { } }
+
     private async Task WorkerAsync()
     {
         Baseline? baseline = null;
@@ -199,7 +202,7 @@ public sealed class AutomationQueue : IDisposable
                 if (baseline != null || baselineTargets.Count > 0)
                 {
                     // Wachtrij leeg: lampen terug naar hoe ze waren
-                    await _engine.RestoreAsync(baseline, baselineTargets);
+                    try { await _engine.RestoreAsync(baseline, baselineTargets); } catch { }
                     baseline = null;
                     baselineTargets = Array.Empty<string>();
                 }
@@ -207,13 +210,14 @@ public sealed class AutomationQueue : IDisposable
                 continue;
             }
 
-            Changed?.Invoke();
-            var targets = _targets();
+            Safe(Changed);
+            IReadOnlyList<string> targets;
+            try { targets = _targets(); } catch { targets = Array.Empty<string>(); }
             FinishReason reason;
             string? error = null;
             if (targets.Count == 0)
             {
-                NoTargets?.Invoke();
+                Safe(NoTargets);
                 reason = FinishReason.Failed;
                 error = "Geen actief Govee-apparaat";
             }
@@ -254,7 +258,7 @@ public sealed class AutomationQueue : IDisposable
                                     item.WaitStartedUtc = DateTime.UtcNow;
                                 }
                             }
-                            if (earlier != null) Changed?.Invoke();
+                            if (earlier != null) Safe(Changed);
                             var at = item.StartAtUtc!.Value;
                             var wait = (at - DateTime.UtcNow).TotalMilliseconds;
                             var waited = (DateTime.UtcNow - item.WaitStartedUtc.Value).TotalMilliseconds;
@@ -296,8 +300,9 @@ public sealed class AutomationQueue : IDisposable
                 _currentCts?.Dispose();
                 _currentCts = null;
             }
-            Finished?.Invoke(item, reason, error);
-            Changed?.Invoke();
+            var done = item;
+            Safe(() => Finished?.Invoke(done, reason, error));
+            Safe(Changed);
 
             var gap = _options().GapMs;
             if (gap > 0 && reason == FinishReason.Completed)

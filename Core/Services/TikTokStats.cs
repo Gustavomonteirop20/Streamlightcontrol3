@@ -31,6 +31,8 @@ public sealed class TikTokStats
     private readonly List<TikTokRecord> _items = new();
     private readonly string _path;
     private int _version;
+    private Timer? _saveTimer;
+    private readonly object _fileGate = new();
 
     public TikTokStats(string dataDirectory)
     {
@@ -74,24 +76,33 @@ public sealed class TikTokStats
             _items.RemoveAll(t => t.AtUtc < cutoff);
             if (_items.Count > 100000) _items.RemoveRange(0, _items.Count - 100000);
             _version++;
-            Save();
+            RequestSave();
         }
         return rec;
     }
 
     /// <summary>Alles wissen.</summary>
-    public void Clear() { lock (_gate) { _items.Clear(); _version++; Save(); } }
+    public void Clear() { lock (_gate) { _items.Clear(); _version++; } SaveNow(); }
 
     /// <summary>Overlays opnieuw laten tekenen (bijv. na "Nieuwe stream").</summary>
     public void Touch() { lock (_gate) _version++; }
 
-    private void Save()
+    /// <summary>Opslaan na 2 s rust, op de achtergrond: bij een gift-regen niet bij elke gift het hele bestand schrijven.</summary>
+    private void RequestSave()
+    {
+        _saveTimer ??= new Timer(_ => SaveNow(), null, Timeout.Infinite, Timeout.Infinite);
+        _saveTimer.Change(2000, Timeout.Infinite);
+    }
+
+    /// <summary>Direct opslaan (ook bij afsluiten).</summary>
+    public void SaveNow()
     {
         try
         {
+            string json;
+            lock (_gate) json = JsonSerializer.Serialize(_items);
             var tmp = _path + ".tmp";
-            File.WriteAllText(tmp, JsonSerializer.Serialize(_items));
-            File.Move(tmp, _path, true);
+            lock (_fileGate) { File.WriteAllText(tmp, json); File.Move(tmp, _path, true); }
         }
         catch { /* niet erg: volgende event probeert opnieuw */ }
     }

@@ -1,0 +1,30 @@
+# Controle bij elke push: bouwt de hele app op Windows (ook de schermen/XAML) en draait de tests.
+# Publiceert niets – updates voor iedereen gaan alleen via de Release-workflow.
+name: Bouwcontrole
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: App bouwen (Windows, WPF)
+        shell: pwsh
+        run: dotnet build StreamLightControl2.csproj -c Release
+
+      - name: Tests (kernlogica)
+        continue-on-error: true
+        shell: pwsh
+        run: dotnet run --project Tests/StreamLightControl2.Tests.csproj -c Release

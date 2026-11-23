@@ -1656,6 +1656,7 @@ TestSync("Kerst-TikTok-overlays: leaderboard, Gift Gallery, grootste gift, laats
     var j3 = System.Text.Json.JsonSerializer.SerializeToElement(t.Snapshot(o, DateTime.UtcNow.AddSeconds(2)));
     Eq(0, j3.GetProperty("ranking").GetArrayLength(), "nieuwe stream: leeg");
     True(j3.GetProperty("lastFollower").ValueKind == System.Text.Json.JsonValueKind.Null, "nieuwe stream: geen volger");
+    t.SaveNow();
     Eq(t.Count, new TikTokStats(dir).Count, "bewaard in tiktok.json");
 });
 
