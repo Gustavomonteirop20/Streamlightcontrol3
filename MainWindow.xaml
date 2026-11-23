@@ -95,6 +95,38 @@
                                 <TextBlock Text="{Binding GoveeText}" HorizontalAlignment="Right" FontSize="11" Foreground="{StaticResource Text3Brush}"/>
                             </Grid>
                         </Button>
+                        <!-- Helderheid van alle shows: één knop -->
+                        <Button x:Name="BrightnessButton" Style="{StaticResource GhostButton}" Padding="8,0" Height="38" HorizontalContentAlignment="Left" Margin="0,4,0,0"
+                                Click="Brightness_Click" ToolTip="Helderheid van alle lichtshows. Werkt meteen, ook tijdens een show.">
+                            <Grid Width="180">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE706;" FontFamily="{StaticResource IconFont}" FontSize="14" Foreground="{StaticResource Accent2Brush}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Helderheid shows" Margin="10,0,0,0" Foreground="{StaticResource TextBrush}" FontSize="12" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Settings.Lighting.ShowBrightness, StringFormat={}{0}%}" HorizontalAlignment="Right" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Button>
+                        <Popup x:Name="BrightnessPopup" PlacementTarget="{Binding ElementName=BrightnessButton}" Placement="Top" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
+                            <Border Background="{StaticResource ElevatedBrush}" BorderBrush="{StaticResource LineStrongBrush}" BorderThickness="1" CornerRadius="12" Padding="16,14" Width="260" Margin="0,0,0,6">
+                                <StackPanel>
+                                    <Grid>
+                                        <TextBlock Text="Helderheid van alle shows" FontWeight="SemiBold" FontSize="13"/>
+                                        <TextBlock Text="{Binding Settings.Lighting.ShowBrightness, StringFormat={}{0}%}" HorizontalAlignment="Right" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource Accent2Brush}"/>
+                                    </Grid>
+                                    <Slider x:Name="BrightnessSlider" Minimum="10" Maximum="100" SmallChange="5" LargeChange="10" TickFrequency="5" IsSnapToTickEnabled="True" Margin="0,12,0,8"
+                                            Value="{Binding Settings.Lighting.ShowBrightness, Mode=TwoWay}"/>
+                                    <UniformGrid Columns="4">
+                                        <Button Style="{StaticResource GhostButton}" Content="25%" Click="BrightnessPreset_Click" Padding="0" Height="30"/>
+                                        <Button Style="{StaticResource GhostButton}" Content="50%" Click="BrightnessPreset_Click" Padding="0" Height="30"/>
+                                        <Button Style="{StaticResource GhostButton}" Content="75%" Click="BrightnessPreset_Click" Padding="0" Height="30"/>
+                                        <Button Style="{StaticResource GhostButton}" Content="100%" Click="BrightnessPreset_Click" Padding="0" Height="30"/>
+                                    </UniformGrid>
+                                    <TextBlock Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                               Text="Geldt voor elke show (gifts, follows, binnenkomst, Spotify). Werkt meteen, ook als er een show bezig is."/>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
                         <Grid Margin="8,10,0,0">
                             <TextBlock VerticalAlignment="Center" Style="{StaticResource Caption}">
                                 <Run Text="Versie"/> <Run Text="{Binding Version, Mode=OneWay}"/>

@@ -127,6 +127,10 @@ public sealed class EventTrigger : ObservableObject
     /// <summary>Breekt een lopende show met lagere prioriteit af.</summary>
     public bool InterruptCurrent { get => _interruptCurrent; set => Set(ref _interruptCurrent, value); }
 
+    private bool _oncePerLive;
+    /// <summary>Binnenkomst: deze koppeling speelt maar één keer per live (ook als de kijker opnieuw binnenkomt).</summary>
+    public bool OncePerLive { get => _oncePerLive; set => Set(ref _oncePerLive, value); }
+
     [JsonIgnore] public string EventLabel => EventTypes.Label(EventType);
     [JsonIgnore] public string PriorityLabel => Priorities.Label(Priority);
 
@@ -190,6 +194,7 @@ public sealed class EventTrigger : ObservableObject
         Id = Id, Name = Name, EventType = EventType, ShowId = ShowId, Priority = Priority, Enabled = Enabled,
         GiftNames = GiftNames, MinCoins = MinCoins, MaxCoins = MaxCoins, MatchText = MatchText,
         LikeThreshold = LikeThreshold, CooldownSeconds = CooldownSeconds, MaxInQueue = MaxInQueue,
-        InterruptCurrent = InterruptCurrent, TipKind = TipKind, StartDelayMs = StartDelayMs, SoundDurationMs = SoundDurationMs
+        InterruptCurrent = InterruptCurrent, TipKind = TipKind, StartDelayMs = StartDelayMs, SoundDurationMs = SoundDurationMs,
+        OncePerLive = OncePerLive
     };
 }

@@ -198,6 +198,10 @@
                             <TextBox Text="{Binding MatchText, UpdateSourceTrigger=LostFocus}" ui:Hint.Text="Leeg = iedereen, bijv. thomas" Margin="0,0,0,6"/>
                             <TextBlock Style="{StaticResource Caption}" Margin="0,0,0,18" TextWrapping="Wrap"
                                        Text="De TikTok-naam (zonder @) of de weergavenaam, precies zoals op TikTok. Meerdere kijkers: scheiden met een komma."/>
+                            <CheckBox Style="{StaticResource Switch}" Content="Maar 1× per live" IsChecked="{Binding OncePerLive}" Margin="0,-8,0,6"
+                                      ToolTip="Komt deze kijker opnieuw binnen (bijv. na een verbroken verbinding), dan speelt de show niet nog een keer. Een nieuwe live begint na 45 minuten zonder events, of met ‘Nieuwe stream’."/>
+                            <TextBlock Style="{StaticResource Caption}" Margin="0,0,0,18" TextWrapping="Wrap"
+                                       Text="Nieuwe live: vanzelf na 45 min zonder events, of met de knop ‘Nieuwe stream’ op de BetterTok-pagina. De testknoppen werken altijd."/>
                         </StackPanel>
                         <StackPanel x:Name="LikeSection">
                             <TextBlock Text="VOORWAARDEN – LIKES" Style="{StaticResource Overline}" Margin="0,0,0,10"/>

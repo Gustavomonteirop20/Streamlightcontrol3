@@ -1,3 +1,5 @@
+using System.IO;
+using System.Text.Json;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using StreamLightControl2.Core.Models;
@@ -84,6 +86,7 @@ public sealed class AutomationController : IDisposable
     {
         Settings.Overlays.TikTokStartUtc = DateTime.UtcNow;
         TikTok.Touch();
+        Rules.ResetSession();   // ook binnenkomst-shows en follows opnieuw
         Store.RequestSave();
     }
 
@@ -218,6 +221,29 @@ public sealed class AutomationController : IDisposable
         DonateWave.CursorChanged += c => Run(() => { Settings.DonateWave.Cursor = c; Store.RequestSave(); });
 
         _pollTimer = new Timer(_ => _ = PollDevicesAsync(), null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(30));
+
+        // Binnenkomst maar 1× per live: ook na herstarten van de app midden in een live
+        Rules.ImportLiveState(LoadLiveState());
+        Rules.LiveStateChanged += SaveLiveState;
+    }
+
+    private string LiveStatePath => Path.Combine(Store.DataDirectory, "live-state.json");
+    private readonly object _liveFileGate = new();
+
+    private LiveState? LoadLiveState()
+    {
+        try { return File.Exists(LiveStatePath) ? JsonSerializer.Deserialize<LiveState>(File.ReadAllText(LiveStatePath)) : null; }
+        catch { return null; }
+    }
+
+    private void SaveLiveState()
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(Rules.ExportLiveState());
+            lock (_liveFileGate) { File.WriteAllText(LiveStatePath + ".tmp", json); File.Move(LiveStatePath + ".tmp", LiveStatePath, true); }
+        }
+        catch { /* niet erg */ }
     }
 
     private void Run(Action action)

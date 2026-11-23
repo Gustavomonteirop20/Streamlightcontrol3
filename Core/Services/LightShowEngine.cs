@@ -204,7 +204,7 @@ public sealed class LightShowEngine
         var cozy = Presets.CozySongs.Contains(show.PresetKey);
         var frames = CalmShow.Build(show, cozy);
         var total = Math.Max(1, show.TotalDurationMs);
-        var master = opt.ShowBrightness / 100.0;
+        // Helderheid (knop linksonder) wordt per beeld gelezen: aanpassen werkt meteen, ook tijdens een show
         await ForAll(ips, ip => EnsureOnAndBrightness(ip, 100, token));
         var lastBase = new System.Collections.Concurrent.ConcurrentDictionary<string, (byte, byte, byte)>();
         // Precieze timing: Windows-timer op 1 ms, laatste stukje exact aftellen op de Stopwatch (±0,1 ms)
@@ -222,6 +222,7 @@ public sealed class LightShowEngine
                     var at = offset + f.AtMs;
                     if (rep == 0 && at + f.DurationMs <= -opt.LatencyMs) continue;   // al voorbij (show begint midden in)
                     // Eerst alles uitrekenen, dan precies op het moment versturen
+                    var master = opt.ShowBrightness / 100.0;
                     var color = Scale(f.Color, master);
                     var frame = f with { Color = color, Accent = f.Accent == default ? default : Scale(f.Accent, master) };
                     var rendered = ips.ToDictionary(ip => ip, ip => ZonesFor(ip, opt) is { } zz ? CalmShow.Render(zz, frame, cozy) : null);
@@ -272,7 +273,7 @@ public sealed class LightShowEngine
         _govee.CommandDelayMs = opt.EffectiveCommandDelayMs;
         ForgetState();
         var total = Math.Max(1, show.TotalDurationMs);
-        var master = opt.ShowBrightness / 100.0;
+        // Helderheid per stap gelezen (knop linksonder werkt meteen)
         await ForAll(ips, ip => EnsureOnAndBrightness(ip, 100, token));
         using var hires = TimerResolution.High();
         var margin = hires.Active ? 10 : 20;
@@ -292,6 +293,7 @@ public sealed class LightShowEngine
                     at += step.DurationMs;
                     if (rep == 0 && at <= -opt.LatencyMs) continue;   // al voorbij (show begint midden in)
                     var off = step.Kind == StepKind.Off;
+                    var master = opt.ShowBrightness / 100.0;
                     (byte r, byte g, byte b) a = off ? ((byte)0, (byte)0, (byte)0) : Scale(ColorUtil.ParseHex(step.ColorHex), step.Brightness / 100.0 * master);
                     var b = !off && step.IsSplit ? Scale(ColorUtil.ParseHex(step.ColorHex2), step.Brightness / 100.0 * master) : a;
                     var white = !off && step.ColorHex == "#FFFFFF";

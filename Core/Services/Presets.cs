@@ -178,7 +178,7 @@ public static class Presets
             {
                 Id = "te-" + id, Name = $"♪ Binnenkomst {name}", EventType = EventTypes.Member, MatchText = user,
                 ShowId = "preset-" + song, Priority = Priorities.VeryHigh, InterruptCurrent = false,
-                CooldownSeconds = 60, MaxInQueue = 1, SoundDurationMs = soundMs
+                CooldownSeconds = 60, MaxInQueue = 1, SoundDurationMs = soundMs, OncePerLive = true
             };
     }
 

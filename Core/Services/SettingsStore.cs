@@ -422,7 +422,15 @@ public sealed class SettingsStore : IDisposable
             s.Version = 32;
             changed = true;
         }
-        if (changed && s.Version < 32) s.Version = 32;
+        if (startVersion < 33)
+        {
+            // Versie 33: binnenkomst-shows voor een bepaalde kijker maar één keer per live (ook eigen regels)
+            foreach (var t in s.Triggers.Where(t => t.EventType == EventTypes.Member && !string.IsNullOrWhiteSpace(t.MatchText)))
+                t.OncePerLive = true;
+            s.Version = 33;
+            changed = true;
+        }
+        if (changed && s.Version < 33) s.Version = 33;
         return changed;
     }
 

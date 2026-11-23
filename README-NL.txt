@@ -328,6 +328,15 @@ Sound en show lopen gelijk: de app rekent vanaf het moment van de tip (DonateWav
 Versie 3.18: de overlay laat een tip iets later zien dan het moment van de tip (ontvangen + animatie en
 geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later laten beginnen dan de tip" op de
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
+HELDERHEID + BINNENKOMST 1× PER LIVE (versie 3.40)
+Helderheid: linksonder in de app staat "Helderheid shows" met het percentage. Klik erop: schuifje en knoppen
+25/50/75/100%. Geldt voor elke show (gifts, follows, binnenkomst, Spotify) en werkt meteen, ook tijdens een show.
+Binnenkomst: elke binnenkomst-show voor een bepaalde kijker (Thomas, Diego, Martin, Nick en je eigen regels) speelt
+maar één keer per live. Komt iemand opnieuw binnen, dan staat in de geschiedenis "speelde deze live al".
+Een nieuwe live begint vanzelf na 45 minuten zonder events, of met "Nieuwe stream" op de BetterTok-pagina.
+Ook als de app halverwege de live herstart, blijft onthouden wie al binnen is gekomen. De testknoppen werken altijd.
+Uitzetten per regel: Event Manager › regel › "Maar 1× per live".
+
 THEMA'S (versie 3.39) – Instellingen › Algemeen › Thema.
 Standaard (paars/blauw), Kerst (dennengroen, rood en goud), Herfst (bruin, oranje en mosterd), Zomer (zee, zon en
 turquoise) of Automatisch per seizoen (december kerst, september–november herfst, juni–augustus zomer, anders

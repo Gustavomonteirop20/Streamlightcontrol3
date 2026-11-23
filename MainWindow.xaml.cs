@@ -138,6 +138,15 @@ public partial class MainWindow : Window
         UpdateModeSwitch();
     }
     private void GoDevices_Click(object sender, RoutedEventArgs e) => Navigate("devices");
+    private void Brightness_Click(object sender, RoutedEventArgs e) => BrightnessPopup.IsOpen = !BrightnessPopup.IsOpen;
+
+    private void BrightnessPreset_Click(object sender, RoutedEventArgs e)
+    {
+        // Tag staat in de icoonletter van de knopstijl; daarom uit Content lezen
+        if (sender is Button { Content: string text } && int.TryParse(text.TrimEnd('%'), out var v))
+            App.Controller.Settings.Lighting.ShowBrightness = v;
+    }
+
     private void GoSettings_Click(object sender, RoutedEventArgs e) => Navigate("settings");
 
     // ------------------------------------------------------------ updates

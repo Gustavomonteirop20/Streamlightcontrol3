@@ -2,7 +2,7 @@ using StreamLightControl2.Core.Models;
 
 namespace StreamLightControl2.Core.Services;
 
-public enum DecisionKind { Play, NoRule, Duplicate, StreakInProgress, Cooldown, FollowRepeat, FollowGrouped, BelowThreshold, QueueLimit, ShowMissing, ComboRemainder }
+public enum DecisionKind { Play, NoRule, Duplicate, StreakInProgress, Cooldown, FollowRepeat, FollowGrouped, BelowThreshold, QueueLimit, ShowMissing, ComboRemainder, AlreadyThisLive }
 
 public sealed record RuleDecision(DecisionKind Kind, EventTrigger? Trigger, LightShow? Show, string Reason)
 {
@@ -23,6 +23,15 @@ public sealed class RuleEngine
     private readonly HashSet<string> _followedUsers = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, DateTime> _cloudCombos = new();
     private DateTime _lastFollowEffect = DateTime.MinValue;
+    private readonly Dictionary<string, DateTime> _entrancesThisLive = new();
+    private DateTime _lastEventAt = DateTime.MinValue;
+    private DateTime _lastSavedEventAt = DateTime.MinValue;
+
+    /// <summary>Zo lang geen enkel event = de live is voorbij; daarna mag elke binnenkomst-show weer één keer.</summary>
+    public static readonly TimeSpan LiveGap = TimeSpan.FromMinutes(45);
+
+    /// <summary>Er is een binnenkomst-show gespeeld (om te bewaren, zodat het na herstarten van de app blijft gelden).</summary>
+    public event Action? LiveStateChanged;
 
     public Func<DateTime> Clock { get; set; } = () => DateTime.Now;
 
@@ -120,6 +129,16 @@ public sealed class RuleEngine
         var now = Clock();
         lock (_gate)
         {
+            // 0. Lange tijd niets gebeurd? Dan is dit een nieuwe live
+            if (!e.IsTest)
+            {
+                if (_lastEventAt != DateTime.MinValue && now - _lastEventAt > LiveGap && _entrancesThisLive.Count > 0)
+                { _entrancesThisLive.Clear(); LiveStateChangedLater(); }
+                _lastEventAt = now;
+                // af en toe bewaren, zodat "de live loopt nog" ook na herstarten klopt
+                if (_entrancesThisLive.Count > 0 && now - _lastSavedEventAt > TimeSpan.FromMinutes(5)) { _lastSavedEventAt = now; LiveStateChangedLater(); }
+            }
+
             // 1. Dubbel bericht? (meestal al gecontroleerd via CheckDuplicate)
             if (checkDuplicate && IsDuplicateLocked(e, now))
                 return new(DecisionKind.Duplicate, null, null, "Dubbel bericht – al verwerkt");
@@ -147,6 +166,10 @@ public sealed class RuleEngine
             var show = settings.FindShow(trigger.ShowId);
             if (show == null)
                 return new(DecisionKind.ShowMissing, trigger, null, $"Koppeling ‘{trigger.Name}’ heeft geen (bestaande) lichtshow");
+
+            // 3b. Binnenkomst maar één keer per live (testknoppen altijd)
+            if (trigger.OncePerLive && !e.IsTest && _entrancesThisLive.TryGetValue(trigger.Id, out var entered))
+                return new(DecisionKind.AlreadyThisLive, trigger, show, $"‘{trigger.Name}’ speelde deze live al (om {entered:HH:mm})");
 
             // 4. Follow-regels
             if (e.Type == EventTypes.Follow && !e.IsTest)
@@ -180,6 +203,7 @@ public sealed class RuleEngine
 
             _lastFired[trigger.Id] = now;
             if (e.Type == EventTypes.Follow) _lastFollowEffect = now;
+            if (trigger.OncePerLive && !e.IsTest) { _entrancesThisLive[trigger.Id] = now; LiveStateChangedLater(); }
             return new(DecisionKind.Play, trigger, show, $"Koppeling ‘{trigger.Name}’");
         }
     }
@@ -211,17 +235,47 @@ public sealed class RuleEngine
             _cloudCombos.Remove(key);
     }
 
+    private void LiveStateChangedLater() => ThreadPool.QueueUserWorkItem(_ => { try { LiveStateChanged?.Invoke(); } catch { } });
+
+    /// <summary>Welke binnenkomst-shows al speelden deze live, en wanneer het laatste event was (om te bewaren).</summary>
+    public LiveState ExportLiveState()
+    {
+        lock (_gate) return new LiveState { LastEventAt = _lastEventAt, Entrances = new Dictionary<string, DateTime>(_entrancesThisLive) };
+    }
+
+    /// <summary>Na herstarten van de app: binnenkomsten van deze live terugzetten (niet als de live al voorbij is).</summary>
+    public void ImportLiveState(LiveState? state)
+    {
+        if (state == null) return;
+        lock (_gate)
+        {
+            _entrancesThisLive.Clear();
+            if (Clock() - state.LastEventAt > LiveGap) return;
+            _lastEventAt = state.LastEventAt;
+            foreach (var kv in state.Entrances) _entrancesThisLive[kv.Key] = kv.Value;
+        }
+    }
+
+    /// <summary>Binnenkomst-shows mogen weer (zonder de rest van de sessie te wissen).</summary>
+    public void ResetEntrances()
+    {
+        lock (_gate) _entrancesThisLive.Clear();
+        LiveStateChangedLater();
+    }
+
     /// <summary>Nieuwe stream: follows en tellers opnieuw beginnen.</summary>
     public void ResetSession()
     {
         lock (_gate)
         {
+            _entrancesThisLive.Clear();
             _followedUsers.Clear();
             _likeAccumulator.Clear();
             _lastFired.Clear();
             _cloudCombos.Clear();
             _lastFollowEffect = DateTime.MinValue;
         }
+        LiveStateChangedLater();
     }
 
     /// <summary>Waarschuwingen voor de regelbouwer: overlappende bereiken, gaten, ontbrekende shows.</summary>
@@ -253,4 +307,11 @@ public sealed class RuleEngine
             warnings.Add($"‘{t.Name}’ heeft geen lichtshow gekozen.");
         return warnings;
     }
+}
+
+/// <summary>Bewaarde stand van de huidige live (binnenkomsten die al speelden).</summary>
+public sealed class LiveState
+{
+    public DateTime LastEventAt { get; set; }
+    public Dictionary<string, DateTime> Entrances { get; set; } = new();
 }
