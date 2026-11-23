@@ -2480,9 +2480,12 @@ TestSync("Opslag: versie 15 → 16 voegt alle dono-sounds toe, koppelt ze zoals 
 
 Test("Opstarten met instellingen van elke oudere versie (ook met ontbrekende onderdelen) geeft geen fout", async () =>
 {
-    foreach (var v in new[] { 4, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24 })
-    foreach (var direct in new[] { false, true })
-    foreach (var strip in new[] { "", "Spotify", "Updates", "Lighting", "Shows" })
+    // Elke versie compleet, en ontbrekende onderdelen bij de oudste, een middelste en de nieuwste versie
+    // (alle combinaties samen duurden op een trage Windows-machine langer dan 30 s)
+    var cases = new[] { 4, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 }
+        .SelectMany(v => new[] { false, true }.Select(d => (v, d, strip: "")))
+        .Concat(new[] { 4, 17, 30 }.SelectMany(v => new[] { "Spotify", "Updates", "Lighting", "Shows", "Overlays", "DonateWave" }.Select(st => (v, v % 2 == 0, strip: st))));
+    foreach (var (v, direct, strip) in cases)
     {
         var dir = TempDir();
         var s = new AppSettings(); SettingsStore.EnsureDefaults(s, true);

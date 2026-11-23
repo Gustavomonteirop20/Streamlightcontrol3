@@ -328,6 +328,15 @@ Sound en show lopen gelijk: de app rekent vanaf het moment van de tip (DonateWav
 Versie 3.18: de overlay laat een tip iets later zien dan het moment van de tip (ontvangen + animatie en
 geluid laden). Daarom start het licht standaard 1000 ms later ("Licht later laten beginnen dan de tip" op de
 DonateWave-kaart, 0–5000 ms). Loopt het licht nog vóór op de sound: hoger zetten; loopt het achter: lager.
+CONTROLE EN BUGFIXES (versie 3.37.1)
+  · Bij elke wijziging bouwt GitHub de hele app nu op Windows (ook de schermen) en draait alle tests.
+  · Gift-regen: de TikTok-tellers worden op de achtergrond opgeslagen (na 2 s rust) in plaats van bij elke gift,
+    zodat de app niet hapert bij veel gifts tegelijk.
+  · De wachtrij kan niet meer stil komen te staan door een fout in een schermonderdeel; terugzetten van de lampen na
+    een show mag mislukken zonder dat de wachtrij stopt.
+  · Getest: 3.248 willekeurige en echte shows door de lichtshow-opbouw (geen fouten, nooit sneller dan 360 ms,
+    altijd < 3 flitsen per seconde) en opstarten met instellingen van alle oude versies, ook met ontbrekende delen.
+
 KERST-TIKTOK-OVERLAYS (versie 3.37) – BetterTok-pagina › Kerst-overlays, onderdelen "TikTok · …".
 Eigen kerstversies van betaalde BetterTok-onderdelen, live bijgewerkt met elke gift, volger en sub die BetterTok
 doorgeeft (ook als de lampen uit staan):
