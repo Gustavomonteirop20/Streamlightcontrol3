@@ -2494,17 +2494,24 @@ Test("Opstarten met instellingen van elke oudere versie (ook met ontbrekende ond
         var node = System.Text.Json.Nodes.JsonNode.Parse(System.Text.Json.JsonSerializer.Serialize(s, SettingsStore.JsonOptions))!.AsObject();
         if (strip != "") node[strip] = null;                       // onderdeel ontbreekt of is null
         File.WriteAllText(Path.Combine(dir, "settings.json"), node.ToJsonString());
-        using var app = new AutomationController(dir, NewGovee(), new FakeNowPlaying(), () => new FakeAudio());
+        var sw = System.Diagnostics.Stopwatch.StartNew(); var times = new List<string>();
+        void Lap(string n) { times.Add($"{n} {sw.ElapsedMilliseconds} ms"); sw.Restart(); }
+        var app = new AutomationController(dir, NewGovee(), new FakeNowPlaying(), () => new FakeAudio());
         try
         {
-            app.Initialize();
+            Lap("maken");
+            app.Initialize(); Lap("Initialize");
             app.Settings.Lighting.MinChangeMs = 40; app.ApplyShowTier();
-            app.Settings.Lighting.MinChangeMs = 550; app.ApplyShowTier();
+            app.Settings.Lighting.MinChangeMs = 550; app.ApplyShowTier(); Lap("ShowTier");
             foreach (var show in app.Settings.Shows) { _ = Presets.ToData(show.Steps); _ = show.TotalDurationMs; _ = ShowFile.FromShow(show).ToJson(); }
-            await app.SetModeAsync(AppMode.Spotify);
-            await app.SetModeAsync(AppMode.Stream);
+            Lap("shows");
+            await app.SetModeAsync(AppMode.Spotify); Lap("Spotify");
+            await app.SetModeAsync(AppMode.Stream); Lap("Stream");
+            app.Dispose(); Lap("Dispose");
+            if (v == 30 && strip == "" && !direct) Console.WriteLine("      tijden opstarten: " + string.Join(" · ", times));
         }
         catch (Exception ex) { throw new Exception($"versie {v}, direct={direct}, zonder '{strip}': {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}"); }
+        finally { app.Dispose(); }
     }
 });
 
